@@ -1,0 +1,2277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Создать заявку | Өтінім жасау</title>
+  <style>
+    :root {
+      /* Light theme */
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-gradient: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+      --card-bg: rgba(255, 255, 255, 0.98);
+      --card-border: rgba(0, 0, 0, 0.06);
+      --text-primary: #1a202c;
+      --text-secondary: #4a5568;
+      --text-muted: #718096;
+      --accent-primary: #3b82f6;
+      --accent-secondary: #10b981;
+      --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+      --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --input-bg: #f7fafc;
+      --input-border: #e2e8f0;
+      --input-focus: #3b82f6;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+      --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+      --nav-bg: rgba(255, 255, 255, 0.9);
+      --nav-hover: rgba(59, 130, 246, 0.1);
+      --progress-bg: rgba(59, 130, 246, 0.1);
+      --progress-fill: #3b82f6;
+      --glow: rgba(59, 130, 246, 0.5);
+      --route-color: #3b82f6;
+      --tg-viewport-height: 100vh;
+    }
+
+    [data-theme="dark"] {
+      /* Dark theme */
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-gradient: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      --card-bg: rgba(30, 41, 59, 0.98);
+      --card-border: rgba(255, 255, 255, 0.06);
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --accent-primary: #60a5fa;
+      --accent-secondary: #34d399;
+      --accent-gradient: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+      --success-gradient: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+      --input-bg: #1e293b;
+      --input-border: #334155;
+      --input-focus: #60a5fa;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+      --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+      --nav-bg: rgba(30, 41, 59, 0.9);
+      --nav-hover: rgba(96, 165, 250, 0.1);
+      --progress-bg: rgba(96, 165, 250, 0.1);
+      --progress-fill: #60a5fa;
+      --glow: rgba(96, 165, 250, 0.5);
+      --route-color: #60a5fa;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: all 0.3s ease;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      height: var(--tg-viewport-height);
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: var(--bg-gradient);
+      opacity: 0.03;
+      z-index: -2;
+      animation: gradientAnimation 20s ease-in-out infinite;
+    }
+
+    @keyframes gradientAnimation {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(180deg); }
+    }
+
+    .main-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .content-wrapper {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 20px;
+      padding-bottom: 80px;
+    }
+
+    .lang-switch {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 8px;
+      z-index: 1000;
+    }
+
+    .lang-switch button {
+      background: var(--card-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--card-border);
+      border-radius: 50px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .lang-switch button.active {
+      background: var(--accent-gradient);
+      color: white;
+      border-color: transparent;
+    }
+
+    .page {
+      display: none;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      box-shadow: var(--shadow-xl);
+      padding: 32px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s ease;
+      animation: pageIn 0.5s ease-out;
+    }
+
+    @keyframes pageIn {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .page.active { 
+      display: block; 
+    }
+
+    .fixed-bottom-buttons {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card-bg);
+      border-top: 1px solid var(--card-border);
+      padding: 12px 20px;
+      box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.07);
+      z-index: 100;
+      display: none;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .fixed-bottom-buttons.active {
+      display: block;
+    }
+
+    #mapContainer {
+      width: 100%;
+      height: 300px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      margin-bottom: 20px;
+      position: relative;
+      transition: height 0.3s ease;
+    }
+
+    #mapContainer.expanded {
+      height: 400px;
+    }
+
+    #requestMap {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .map-control-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 8px;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .map-control-btn:hover {
+      transform: scale(1.1);
+      box-shadow: var(--shadow-md);
+    }
+
+    .route-info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: var(--card-bg);
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .location-status {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: var(--success-gradient);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .location-status.error {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .location-status .pulse {
+      width: 8px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+      text-align: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      border-radius: 12px;
+      padding: 16px 32px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+      background: var(--success-gradient);
+      color: white;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+      width: 100%;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-primary {
+      background: var(--accent-gradient);
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--nav-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--card-border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn:active {
+      transform: translateY(-1px);
+    }
+
+    form { 
+      text-align: left; 
+    }
+
+    .form-group { 
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    label { 
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      letter-spacing: 0.01em;
+    }
+
+    label .emoji {
+      font-size: 1.2rem;
+    }
+
+    input[type="text"], 
+    input[type="number"], 
+    input[type="datetime-local"],
+    textarea {
+      width: 100%;
+      padding: 14px 18px;
+      font-size: 1rem;
+      border: 2px solid var(--input-border);
+      border-radius: 12px;
+      background: var(--input-bg);
+      color: var(--text-primary);
+      transition: all 0.3s ease;
+      font-weight: 500;
+      font-family: inherit;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--input-focus);
+      background: var(--card-bg);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+      transform: translateY(-2px);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .address-input-container {
+      position: relative;
+    }
+
+    .address-input {
+      width: 100%;
+      padding-right: 50px;
+    }
+
+    .map-picker-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--accent-gradient);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .map-picker-btn:hover {
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .suggestions-container {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--card-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      margin-top: 5px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 100;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .suggestion-item {
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border-bottom: 1px solid var(--input-border);
+    }
+
+    .suggestion-item:hover {
+      background: var(--nav-hover);
+    }
+
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+
+    #previewContent {
+      background: var(--input-bg);
+      border-radius: 16px;
+      padding: 24px;
+      margin: 24px 0;
+      border: 1px solid var(--input-border);
+    }
+
+    .preview-item { 
+      margin-bottom: 16px;
+      padding: 16px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      border-left: 4px solid var(--input-focus);
+      transition: all 0.3s ease;
+    }
+
+    .preview-item:hover {
+      transform: translateX(4px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .preview-item strong {
+      color: var(--accent-primary);
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .route-preview {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .route-arrow {
+      color: var(--accent-primary);
+      font-size: 1.5rem;
+    }
+
+    .form-progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--progress-bg);
+      overflow: hidden;
+    }
+
+    .form-progress::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: var(--accent-gradient);
+      transition: width 0.5s ease;
+      width: 0%;
+      box-shadow: 0 0 10px var(--glow);
+    }
+
+    #step1 .form-progress::before { width: 50%; }
+    #step2 .form-progress::before { width: 100%; }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--nav-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px 24px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      min-width: 120px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .nav-btn:hover {
+      background: var(--nav-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .price-input {
+      position: relative;
+    }
+
+    .price-input input {
+      padding-right: 50px;
+    }
+
+    .price-currency {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .success-page {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .success-icon {
+      font-size: 4rem;
+      margin-bottom: 24px;
+      display: inline-block;
+      animation: float 3s ease-in-out infinite;
+      filter: drop-shadow(0 10px 20px rgba(16, 185, 129, 0.3));
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .success-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    /* Client Requests List */
+    .requests-container {
+      margin-top: 20px;
+    }
+
+    .request-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .request-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--accent-primary);
+    }
+
+    .request-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .request-route {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .request-route .location {
+      flex: 1;
+    }
+
+    .request-route .from {
+      color: var(--accent-secondary);
+      font-weight: 600;
+    }
+
+    .request-route .to {
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+
+    .request-price {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+    }
+
+    .request-details {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .request-detail {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .truck-type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--nav-hover);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    /* Client Request Detail Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 25px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-xl);
+      animation: slideIn 0.3s ease;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    @keyframes slideIn {
+      from { transform: translate(-50%, -40%); opacity: 0; }
+      to { transform: translate(-50%, -50%); opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .close-btn {
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-btn:hover {
+      color: var(--text-primary);
+      background: var(--card-bg);
+      transform: scale(1.1);
+    }
+
+    .detail-section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: var(--input-bg);
+      border-radius: 12px;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+      font-size: 0.9rem;
+    }
+
+    .detail-value {
+      color: var(--text-primary);
+      font-size: 1.05rem;
+    }
+
+    #detailMap {
+      width: 100%;
+      height: 250px;
+      border-radius: 12px;
+      margin: 0 0 20px 0;
+      box-shadow: var(--shadow-md);
+    }
+
+    .contact-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .contact-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .call-btn {
+      background: var(--success-gradient);
+      color: white;
+    }
+
+    .whatsapp-btn {
+      background: #25D366;
+      color: white;
+    }
+
+    .telegram-btn {
+      background: #0088cc;
+      color: white;
+    }
+
+    .contact-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .client-photo {
+      width: 100%;
+      max-height: 300px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin: 15px 0;
+    }
+
+    /* Loading state */
+    .loading {
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 40px;
+      height: 40px;
+      margin: -20px 0 0 -20px;
+      border: 3px solid var(--input-border);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+
+    .empty-text {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    /* User location marker styles */
+    .user-location-marker {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: #3b82f6;
+      border: 3px solid white;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      transform: translate(-50%, -50%);
+    }
+
+    .user-location-marker::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 40px;
+      height: 40px;
+      background: rgba(59, 130, 246, 0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 0;
+      }
+    }
+
+    /* Permission Dialog */
+    .permission-dialog {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .permission-content {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--shadow-xl);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .permission-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .permission-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+      color: var(--text-primary);
+    }
+
+    .permission-message {
+      color: var(--text-secondary);
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+
+    .permission-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .permission-btn {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .permission-btn.primary {
+      background: var(--accent-gradient);
+      color: white;
+    }
+
+    .permission-btn.secondary {
+      background: var(--input-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--card-border);
+    }
+
+    .permission-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Mobile */
+    @media (max-width: 480px) {
+      .content-wrapper {
+        padding: 12px;
+        padding-bottom: 80px;
+      }
+
+      .lang-switch {
+        top: 12px;
+        right: 12px;
+      }
+
+      .lang-switch button {
+        padding: 6px 14px;
+        font-size: 0.8rem;
+      }
+
+      .page {
+        padding: 24px 20px;
+        border-radius: 20px;
+        max-width: 100%;
+      }
+
+      h1 {
+        font-size: 1.3rem;
+        margin-bottom: 16px;
+      }
+
+      #mapContainer {
+        height: 250px;
+      }
+
+      #mapContainer.expanded {
+        height: 350px;
+      }
+
+      .btn {
+        padding: 14px 24px;
+        font-size: 0.95rem;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      input[type="datetime-local"],
+      textarea {
+        padding: 12px 16px;
+        font-size: 16px; /* Prevents zoom on iOS */
+      }
+
+      .button-group {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .nav-btn {
+        width: 100%;
+      }
+
+      .modal-content {
+        width: 95%;
+        padding: 20px;
+      }
+
+      .contact-buttons {
+        flex-direction: column;
+      }
+
+      .request-card {
+        padding: 15px;
+      }
+
+      .request-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .request-details {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .permission-content {
+        padding: 25px 20px;
+      }
+
+      .permission-buttons {
+        flex-direction: column;
+      }
+    }
+  </style>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=8a3e4da0-9ef2-4176-9203-e7014c1dba6f&lang=ru_RU" type="text/javascript"></script>
+</head>
+<body>
+  <div class="main-container">
+    <div class="lang-switch">
+      <button onclick="setLang('ru')" id="lang-ru" class="active">RU</button>
+      <button onclick="setLang('kz')" id="lang-kz">KZ</button>
+    </div>
+
+    <div class="content-wrapper">
+      <!-- Step 1: Create Request -->
+      <div id="step1" class="page active">
+        <div class="form-progress"></div>
+        <h1 data-ru="Создать заявку" data-kz="Өтінім жасау">Создать заявку</h1>
+        
+        <div id="mapContainer">
+          <div id="requestMap"></div>
+          <div class="route-info" id="routeInfo" style="display: none;">
+            <span id="routeDistance"></span>
+          </div>
+          <div class="location-status" id="locationStatus" style="display: none;">
+            <div class="pulse"></div>
+            <span id="locationText"></span>
+          </div>
+          <div class="map-controls">
+            <button class="map-control-btn" onclick="toggleMapSize()" title="Развернуть/свернуть">
+              <span id="mapSizeIcon">⬜</span>
+            </button>
+          </div>
+        </div>
+        
+        <form id="requestForm">
+          <div class="form-group">
+            <label for="from_address">
+              <span class="emoji">📍</span>
+              <span data-ru="Откуда" data-kz="Қайдан">Откуда</span>
+            </label>
+            <div class="address-input-container">
+              <input type="text" id="from_address" name="from_address" class="address-input" 
+                     placeholder="Введите адрес или выберите на карте" required>
+              <button type="button" class="map-picker-btn" onclick="selectOnMap('from')">📍</button>
+            </div>
+            <div id="from_suggestions" class="suggestions-container" style="display: none;"></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="to_address">
+              <span class="emoji">🎯</span>
+              <span data-ru="Куда" data-kz="Қайда">Куда</span>
+            </label>
+            <div class="address-input-container">
+              <input type="text" id="to_address" name="to_address" class="address-input" 
+                     placeholder="Введите адрес или выберите на карте" required>
+              <button type="button" class="map-picker-btn" onclick="selectOnMap('to')">📍</button>
+            </div>
+            <div id="to_suggestions" class="suggestions-container" style="display: none;"></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="price">
+              <span class="emoji">💰</span>
+              <span data-ru="Цена" data-kz="Бағасы">Цена</span>
+            </label>
+            <div class="price-input">
+              <input type="number" id="price" name="price" min="2000" placeholder="Минимум 2000" required>
+              <span class="price-currency">₸</span>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="comment">
+              <span class="emoji">💬</span>
+              <span data-ru="Комментарий" data-kz="Түсініктеме">Комментарий</span>
+            </label>
+            <textarea id="comment" name="comment" 
+                      placeholder="Дополнительная информация о грузе или особые требования"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="departure_time">
+              <span class="emoji">🕐</span>
+              <span data-ru="Время отправления" data-kz="Жөнелу уақыты">Время отправления</span>
+            </label>
+            <input type="datetime-local" id="departure_time" name="departure_time" required>
+          </div>
+          
+          <input type="hidden" name="from_lat" id="from_lat">
+          <input type="hidden" name="from_lon" id="from_lon">
+          <input type="hidden" name="to_lat" id="to_lat">
+          <input type="hidden" name="to_lon" id="to_lon">
+          <input type="hidden" name="telegram_id" id="telegram_id">
+        </form>
+      </div>
+
+      <!-- Step 2: Preview -->
+      <div id="step2" class="page">
+        <div class="form-progress"></div>
+        <h1 data-ru="Проверьте данные" data-kz="Деректерді тексеріңіз">Проверьте данные</h1>
+        <div id="previewContent"></div>
+      </div>
+
+      <!-- Step 3: Success & Client Requests -->
+      <div id="step3" class="page">
+        <div class="success-page">
+          <div class="success-icon">✅</div>
+          <h1 data-ru="Заявка создана!" data-kz="Өтінім жасалды!">Заявка создана!</h1>
+          <p class="success-subtitle" data-ru="Ищем подходящих клиентов" data-kz="Қолайлы клиенттерді іздеуде">Ищем подходящих клиентов</p>
+        </div>
+        
+        <h2 style="text-align: center; margin: 30px 0;" data-ru="Доступные заявки клиентов" data-kz="Қол жетімді клиент өтінімдері">Доступные заявки клиентов</h2>
+        
+        <div id="clientRequests" class="requests-container">
+          <!-- Client requests will be loaded here -->
+        </div>
+        
+        <div class="button-group" style="margin-top: 30px;">
+          <button class="btn btn-secondary" onclick="Telegram.WebApp.close()">
+            <span>❌</span>
+            <span data-ru="Закрыть" data-kz="Жабу">Закрыть</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="fixed-bottom-buttons" id="fixedButtons">
+      <div class="button-group">
+        <button type="button" id="backBtn" class="nav-btn" style="display: none;">← <span data-ru="Назад" data-kz="Артқа">Назад</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Permission Dialog -->
+  <div id="permissionDialog" class="permission-dialog" style="display: none;">
+    <div class="permission-content">
+      <div class="permission-icon">📍</div>
+      <div class="permission-title" data-ru="Разрешение на геолокацию" data-kz="Геолокацияға рұқсат">Разрешение на геолокацию</div>
+      <div class="permission-message" data-ru="Для создания точной заявки нам нужен доступ к вашему местоположению. Это поможет клиентам найти вас быстрее." data-kz="Дәл өтінім жасау үшін бізге сіздің орналасқан жеріңізге қол жеткізу керек. Бұл клиенттерге сізді тезірек табуға көмектеседі.">
+        Для создания точной заявки нам нужен доступ к вашему местоположению. Это поможет клиентам найти вас быстрее.
+      </div>
+      <div class="permission-buttons">
+        <button class="permission-btn primary" onclick="requestLocationPermission()">
+          <span data-ru="Разрешить" data-kz="Рұқсат беру">Разрешить</span>
+        </button>
+        <button class="permission-btn secondary" onclick="skipLocationPermission()">
+          <span data-ru="Пропустить" data-kz="Өткізіп жіберу">Пропустить</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client Request Detail Modal -->
+  <div id="requestModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 data-ru="Детали заявки" data-kz="Өтінім мәліметтері">Детали заявки</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      
+      <div id="modalContent">
+        <!-- Content will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Set Telegram viewport height
+    function updateViewportHeight() {
+      const vh = Telegram.WebApp.viewportHeight;
+      document.documentElement.style.setProperty('--tg-viewport-height', `${vh}px`);
+    }
+
+    // Update on init and resize
+    updateViewportHeight();
+    Telegram.WebApp.onEvent('viewportChanged', updateViewportHeight);
+
+    // Language management
+    let currentLang = 'ru';
+    const translations = {
+      ru: {
+        createRequest: 'Создать заявку',
+        from: 'Откуда',
+        to: 'Куда',
+        price: 'Цена',
+        comment: 'Комментарий',
+        departureTime: 'Время отправления',
+        back: 'Назад',
+        checkData: 'Проверить данные',
+        confirm: 'Подтвердить',
+        requestCreated: 'Заявка создана!',
+        searchingClients: 'Ищем подходящих клиентов',
+        availableRequests: 'Доступные заявки клиентов',
+        close: 'Закрыть',
+        enterAddress: 'Введите адрес или выберите на карте',
+        minimum: 'Минимум',
+        additionalInfo: 'Дополнительная информация о грузе или особые требования',
+        selectOnMap: 'Выберите точку на карте',
+        routeDistance: 'Расстояние',
+        requestDetails: 'Детали заявки',
+        contact: 'Контакт',
+        call: 'Позвонить',
+        truckType: 'Тип транспорта',
+        noRequests: 'Нет доступных заявок',
+        loading: 'Загрузка...',
+        error: 'Ошибка',
+        fillAllFields: 'Заполните все обязательные поля',
+        minPrice: 'Минимальная цена 2000 ₸',
+        small: 'Малый',
+        medium: 'Средний',
+        large: 'Большой',
+        refrigerator: 'Рефрижератор',
+        tow: 'Эвакуатор',
+        clientPhoto: 'Фото груза',
+        followingYou: 'Отслеживаем ваше местоположение',
+        locationDenied: 'Разрешите доступ к геолокации для лучшей работы',
+        locationPermission: 'Разрешение на геолокацию',
+        locationPermissionMessage: 'Для создания точной заявки нам нужен доступ к вашему местоположению. Это поможет клиентам найти вас быстрее.',
+        allow: 'Разрешить',
+        skip: 'Пропустить',
+        locationActive: 'Геолокация активна',
+        locationError: 'Ошибка геолокации',
+        locationUnavailable: 'Геолокация недоступна'
+      },
+      kz: {
+        createRequest: 'Өтінім жасау',
+        from: 'Қайдан',
+        to: 'Қайда',
+        price: 'Бағасы',
+        comment: 'Түсініктеме',
+        departureTime: 'Жөнелу уақыты',
+        back: 'Артқа',
+        checkData: 'Деректерді тексеру',
+        confirm: 'Растау',
+        requestCreated: 'Өтінім жасалды!',
+        searchingClients: 'Қолайлы клиенттерді іздеуде',
+        availableRequests: 'Қол жетімді клиент өтінімдері',
+        close: 'Жабу',
+        enterAddress: 'Мекенжайды енгізіңіз немесе картадан таңдаңыз',
+        minimum: 'Минимум',
+        additionalInfo: 'Жүк туралы қосымша ақпарат немесе арнайы талаптар',
+        selectOnMap: 'Картадан нүктені таңдаңыз',
+        routeDistance: 'Қашықтық',
+        requestDetails: 'Өтінім мәліметтері',
+        contact: 'Байланыс',
+        call: 'Қоңырау шалу',
+        truckType: 'Көлік түрі',
+        noRequests: 'Қол жетімді өтінімдер жоқ',
+        loading: 'Жүктелуде...',
+        error: 'Қате',
+        fillAllFields: 'Барлық міндетті өрістерді толтырыңыз',
+        minPrice: 'Минималды баға 2000 ₸',
+        small: 'Кіші',
+        medium: 'Орта',
+        large: 'Үлкен',
+        refrigerator: 'Рефрижератор',
+        tow: 'Эвакуатор',
+        clientPhoto: 'Жүк фотосы',
+        followingYou: 'Сіздің орналасқан жеріңізді бақылап отырмыз',
+        locationDenied: 'Жақсы жұмыс істеу үшін геолокацияға рұқсат беріңіз',
+        locationPermission: 'Геолокацияға рұқсат',
+        locationPermissionMessage: 'Дәл өтінім жасау үшін бізге сіздің орналасқан жеріңізге қол жеткізу керек. Бұл клиенттерге сізді тезірек табуға көмектеседі.',
+        allow: 'Рұқсат беру',
+        skip: 'Өткізіп жіберу',
+        locationActive: 'Геолокация белсенді',
+        locationError: 'Геолокация қатесі',
+        locationUnavailable: 'Геолокация қол жетімді емес'
+      }
+    };
+
+    function setLang(lang) {
+      currentLang = lang;
+      document.querySelectorAll('.lang-switch button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.getElementById('lang-' + lang).classList.add('active');
+      
+      // Update all elements with data attributes
+      document.querySelectorAll('[data-ru]').forEach(el => {
+        el.textContent = el.getAttribute('data-' + lang) || el.textContent;
+      });
+      
+      // Update placeholders
+      if (document.getElementById('from_address')) {
+        document.getElementById('from_address').placeholder = translations[lang].enterAddress;
+        document.getElementById('to_address').placeholder = translations[lang].enterAddress;
+        document.getElementById('price').placeholder = translations[lang].minimum + ' 2000';
+        document.getElementById('comment').placeholder = translations[lang].additionalInfo;
+      }
+      
+      // Update main button text based on current step
+      updateMainButtonText();
+    }
+
+    // Theme management
+    function detectSystemTheme() {
+      const hour = new Date().getHours();
+      return (hour >= 20 || hour < 6) ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+
+    let currentTheme = detectSystemTheme();
+    applyTheme(currentTheme);
+
+    setInterval(() => {
+      const newTheme = detectSystemTheme();
+      if (newTheme !== currentTheme) {
+        currentTheme = newTheme;
+        applyTheme(currentTheme);
+      }
+    }, 60000);
+
+    // Telegram WebApp initialization
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+    
+    const user = Telegram.WebApp.initDataUnsafe?.user;
+    if (user) {
+      document.getElementById('telegram_id').value = user.id;
+    }
+
+    // Theme from Telegram
+    if (Telegram.WebApp.colorScheme) {
+      currentTheme = Telegram.WebApp.colorScheme;
+      applyTheme(currentTheme);
+    }
+
+    Telegram.WebApp.onEvent('themeChanged', function() {
+      if (Telegram.WebApp.colorScheme) {
+        currentTheme = Telegram.WebApp.colorScheme;
+        applyTheme(currentTheme);
+      }
+    });
+
+    // Geolocation management
+    let locationPermissionGranted = false;
+    let watchId = null;
+    let locationInterval = null;
+    let currentUserLocation = null;
+
+    // Show permission dialog on page load
+    function showPermissionDialog() {
+      document.getElementById('permissionDialog').style.display = 'flex';
+    }
+
+    function requestLocationPermission() {
+      document.getElementById('permissionDialog').style.display = 'none';
+      
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            locationPermissionGranted = true;
+            currentUserLocation = [position.coords.latitude, position.coords.longitude];
+            updateLocationStatus('active', translations[currentLang].locationActive);
+            startRealtimeLocationTracking();
+            initMapWithPosition(currentUserLocation);
+          },
+          (error) => {
+            console.error('Location permission denied:', error);
+            updateLocationStatus('error', translations[currentLang].locationError);
+            // Initialize map with default location (Almaty)
+            initMapWithPosition([43.238949, 76.889709]);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          }
+        );
+      } else {
+        updateLocationStatus('error', translations[currentLang].locationUnavailable);
+        initMapWithPosition([43.238949, 76.889709]);
+      }
+    }
+
+    function skipLocationPermission() {
+      document.getElementById('permissionDialog').style.display = 'none';
+      updateLocationStatus('error', translations[currentLang].locationUnavailable);
+      // Initialize map with default location
+      initMapWithPosition([43.238949, 76.889709]);
+    }
+
+    function updateLocationStatus(status, message) {
+      const statusEl = document.getElementById('locationStatus');
+      const textEl = document.getElementById('locationText');
+      
+      statusEl.style.display = 'flex';
+      statusEl.className = `location-status ${status}`;
+      textEl.textContent = message;
+    }
+
+    function startRealtimeLocationTracking() {
+      if (!navigator.geolocation || !locationPermissionGranted) return;
+
+      // Start watchPosition for continuous tracking
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const newCoords = [position.coords.latitude, position.coords.longitude];
+          currentUserLocation = newCoords;
+          
+          if (userLocationPlacemark) {
+            userLocationPlacemark.geometry.setCoordinates(newCoords);
+            
+            // Smoothly center map on user location if they moved significantly
+            if (requestMap) {
+              const currentCenter = requestMap.getCenter();
+              const distance = ymaps.coordSystem.geo.getDistance(currentCenter, newCoords);
+              
+              if (distance > 50) { // If moved more than 50 meters
+                requestMap.setCenter(newCoords, requestMap.getZoom(), {
+                  duration: 1000
+                });
+              }
+            }
+          }
+        },
+        (error) => {
+          console.error('Real-time location error:', error);
+          updateLocationStatus('error', translations[currentLang].locationError);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 1000
+        }
+      );
+
+      // Also update location every 1 second using getCurrentPosition for higher accuracy
+      locationInterval = setInterval(() => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const newCoords = [position.coords.latitude, position.coords.longitude];
+            const accuracy = position.coords.accuracy;
+            
+            // Only update if we got a more accurate reading
+            if (accuracy <= 50) { // Less than 50 meters accuracy
+              currentUserLocation = newCoords;
+              
+              if (userLocationPlacemark) {
+                userLocationPlacemark.geometry.setCoordinates(newCoords);
+              }
+              
+              updateLocationStatus('active', `${translations[currentLang].locationActive} (±${Math.round(accuracy)}m)`);
+            }
+          },
+          (error) => {
+            console.error('Interval location error:', error);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 1000,
+            maximumAge: 0
+          }
+        );
+      }, 1000); // Update every 1 second
+    }
+
+    // Map size toggle
+    function toggleMapSize() {
+      const mapContainer = document.getElementById('mapContainer');
+      const icon = document.getElementById('mapSizeIcon');
+      
+      if (mapContainer.classList.contains('expanded')) {
+        mapContainer.classList.remove('expanded');
+        icon.textContent = '⬜';
+      } else {
+        mapContainer.classList.add('expanded');
+        icon.textContent = '⬛';
+      }
+      
+      // Resize map
+      if (requestMap) {
+        setTimeout(() => {
+          requestMap.container.fitToViewport();
+        }, 300);
+      }
+    }
+
+    // Yandex Maps with real-time tracking
+    let requestMap;
+    let fromPlacemark, toPlacemark;
+    let userLocationPlacemark;
+    let routeLine;
+    let selectingPoint = null;
+
+    ymaps.ready(() => {
+      // Show permission dialog first
+      setTimeout(showPermissionDialog, 1000);
+    });
+
+    function initMapWithPosition(center) {
+      if (requestMap) {
+        requestMap.destroy();
+      }
+
+      requestMap = new ymaps.Map("requestMap", {
+        center: center,
+        zoom: 14,
+        controls: [] // Remove all default controls including zoom and logo
+      });
+
+      // Customize map behavior
+      requestMap.behaviors.disable(['scrollZoom']); // Disable scroll zoom
+      
+      // Add user location marker
+      addUserLocationMarker(center);
+
+      // Add click handler for map selection
+      requestMap.events.add('click', function (e) {
+        if (selectingPoint) {
+          const coords = e.get('coords');
+          setPoint(selectingPoint, coords);
+          getAddress(coords, selectingPoint);
+          selectingPoint = null;
+        }
+      });
+    }
+
+    function addUserLocationMarker(coords) {
+      if (userLocationPlacemark) {
+        requestMap.geoObjects.remove(userLocationPlacemark);
+      }
+
+      userLocationPlacemark = new ymaps.Placemark(coords, {
+        hintContent: translations[currentLang].followingYou || 'Отслеживаем ваше местоположение'
+      }, {
+        iconLayout: 'default#imageWithContent',
+        iconImageHref: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDMwIDMwIj4KICA8Y2lyY2xlIGN4PSIxNSIgY3k9IjE1IiByPSIxMCIgZmlsbD0iIzNiODJmNiIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgPGNpcmNsZSBjeD0iMTUiIGN5PSIxNSIgcj0iNCIgZmlsbD0id2hpdGUiLz4KPC9zdmc+',
+        iconImageSize: [30, 30],
+        iconImageOffset: [-15, -15],
+        iconContentLayout: ymaps.templateLayoutFactory.createClass(
+          '<div class="user-location-marker"></div>'
+        )
+      });
+
+      requestMap.geoObjects.add(userLocationPlacemark);
+    }
+
+    function selectOnMap(type) {
+      selectingPoint = type;
+      Telegram.WebApp.showAlert(translations[currentLang].selectOnMap);
+    }
+
+    function setPoint(type, coords) {
+      if (type === 'from') {
+        if (fromPlacemark) {
+          requestMap.geoObjects.remove(fromPlacemark);
+        }
+        fromPlacemark = new ymaps.Placemark(coords, {
+          hintContent: translations[currentLang].from
+        }, {
+          preset: 'islands#greenIcon',
+          draggable: true
+        });
+        requestMap.geoObjects.add(fromPlacemark);
+        
+        fromPlacemark.events.add('dragend', function () {
+          const newCoords = fromPlacemark.geometry.getCoordinates();
+          getAddress(newCoords, 'from');
+          updateRoute();
+        });
+        
+        document.getElementById('from_lat').value = coords[0];
+        document.getElementById('from_lon').value = coords[1];
+      } else {
+        if (toPlacemark) {
+          requestMap.geoObjects.remove(toPlacemark);
+        }
+        toPlacemark = new ymaps.Placemark(coords, {
+          hintContent: translations[currentLang].to
+        }, {
+          preset: 'islands#redIcon',
+          draggable: true
+        });
+        requestMap.geoObjects.add(toPlacemark);
+        
+        toPlacemark.events.add('dragend', function () {
+          const newCoords = toPlacemark.geometry.getCoordinates();
+          getAddress(newCoords, 'to');
+          updateRoute();
+        });
+        
+        document.getElementById('to_lat').value = coords[0];
+        document.getElementById('to_lon').value = coords[1];
+      }
+      
+      updateRoute();
+    }
+
+    function getAddress(coords, type) {
+      ymaps.geocode(coords, {
+        kind: 'house',
+        results: 1
+      }).then(function (res) {
+        const firstGeoObject = res.geoObjects.get(0);
+        const address = firstGeoObject.getAddressLine();
+        
+        if (type === 'from') {
+          document.getElementById('from_address').value = address;
+        } else {
+          document.getElementById('to_address').value = address;
+        }
+      });
+    }
+
+    function updateRoute() {
+      if (fromPlacemark && toPlacemark) {
+        if (routeLine) {
+          requestMap.geoObjects.remove(routeLine);
+        }
+        
+        const fromCoords = fromPlacemark.geometry.getCoordinates();
+        const toCoords = toPlacemark.geometry.getCoordinates();
+        
+        ymaps.route([fromCoords, toCoords], {
+          mapStateAutoApply: true,
+          multiRoute: false
+        }).then(function (route) {
+          routeLine = route;
+          routeLine.getPaths().options.set({
+            strokeColor: '3b82f6FF',
+            strokeWidth: 5,
+            opacity: 0.8
+          });
+          requestMap.geoObjects.add(routeLine);
+          
+          // Show distance
+          const distance = route.getLength();
+          const distanceKm = (distance / 1000).toFixed(1);
+          document.getElementById('routeDistance').textContent = 
+            translations[currentLang].routeDistance + ': ' + distanceKm + ' км';
+          document.getElementById('routeInfo').style.display = 'block';
+        });
+      }
+    }
+
+    // Address suggestions with Kazakhstan priority
+    let suggestTimeout;
+    
+    function setupAddressSuggestions(fieldId) {
+      const input = document.getElementById(fieldId);
+      const suggestionsId = fieldId + '_suggestions';
+      
+      input.addEventListener('input', function(e) {
+        clearTimeout(suggestTimeout);
+        const query = e.target.value;
+        
+        if (query.length < 3) {
+          document.getElementById(suggestionsId).style.display = 'none';
+          return;
+        }
+        
+        suggestTimeout = setTimeout(() => {
+          // Search with Kazakhstan bounds priority
+          const searchPromise = ymaps.suggest(query, {
+            boundedBy: [[41.15, 46.99], [55.44, 87.31]], // Kazakhstan bounds
+            strictBounds: false,
+            results: 10
+          });
+          
+          searchPromise.then(function (items) {
+            // Filter and prioritize Kazakhstan results
+            const kazakhstanItems = items.filter(item => 
+              item.displayName.includes('Казахстан') || 
+              item.displayName.includes('Kazakhstan') ||
+              item.value.includes('Алматы') ||
+              item.value.includes('Астана') ||
+              item.value.includes('Нур-Султан')
+            );
+            
+            const otherItems = items.filter(item => 
+              !kazakhstanItems.includes(item)
+            );
+            
+            const sortedItems = [...kazakhstanItems, ...otherItems];
+            displaySuggestions(fieldId, sortedItems.slice(0, 5));
+          });
+        }, 300);
+      });
+    }
+
+    setupAddressSuggestions('from_address');
+    setupAddressSuggestions('to_address');
+
+    function displaySuggestions(field, items) {
+      const container = document.getElementById(field + '_suggestions');
+      container.innerHTML = '';
+      
+      if (items.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+      
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'suggestion-item';
+        div.textContent = item.displayName;
+        div.onclick = function() {
+          document.getElementById(field).value = item.value;
+          container.style.display = 'none';
+          
+          // Geocode to get coordinates
+          ymaps.geocode(item.value, {
+            results: 1
+          }).then(function(res) {
+            const firstGeoObject = res.geoObjects.get(0);
+            const coords = firstGeoObject.geometry.getCoordinates();
+            const type = field.includes('from') ? 'from' : 'to';
+            setPoint(type, coords);
+          });
+        };
+        container.appendChild(div);
+      });
+      
+      container.style.display = 'block';
+    }
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.classList.contains('address-input')) {
+        document.querySelectorAll('.suggestions-container').forEach(container => {
+          container.style.display = 'none';
+        });
+      }
+    });
+
+    // Step navigation
+    let currentStep = 1;
+    
+    function show(step) {
+      currentStep = step;
+      [1,2,3].forEach(i => {
+        const el = document.getElementById('step'+i);
+        el.classList.toggle('active', i===step);
+      });
+      
+      // Update fixed buttons
+      const fixedButtons = document.getElementById('fixedButtons');
+      const backBtn = document.getElementById('backBtn');
+      
+      if (step === 2) {
+        fixedButtons.classList.add('active');
+        backBtn.style.display = 'inline-flex';
+      } else {
+        fixedButtons.classList.remove('active');
+      }
+      
+      Telegram.WebApp.MainButton.hide();
+      updateMainButtonText();
+      
+      if (step === 3) {
+        loadClientRequests();
+      }
+    }
+
+    function updateMainButtonText() {
+      if (currentStep === 1) {
+        Telegram.WebApp.MainButton.setText('📋 ' + translations[currentLang].checkData);
+        Telegram.WebApp.MainButton.show();
+        Telegram.WebApp.MainButton.color = '#10b981';
+      } else if (currentStep === 2) {
+        Telegram.WebApp.MainButton.setText('✅ ' + translations[currentLang].confirm);
+        Telegram.WebApp.MainButton.show();
+        Telegram.WebApp.MainButton.color = '#3b82f6';
+      }
+    }
+
+    // Set default departure time to now + 1 hour
+    const now = new Date();
+    now.setHours(now.getHours() + 1);
+    document.getElementById('departure_time').value = now.toISOString().slice(0, 16);
+
+    // Navigation handlers
+    document.getElementById('backBtn').onclick = () => show(1);
+
+    // Form validation and preview
+    function buildPreview() {
+      const f = document.getElementById('requestForm');
+      if (!f.checkValidity()) { 
+        f.reportValidity(); 
+        return false; 
+      }
+      
+      const price = parseInt(document.getElementById('price').value);
+      if (price < 2000) {
+        Telegram.WebApp.showAlert(translations[currentLang].minPrice);
+        return false;
+      }
+      
+      const data = new FormData(f);
+      let html = '';
+      
+      // Route
+      html += `<div class="preview-item">
+        <strong>${translations[currentLang].from} → ${translations[currentLang].to}</strong>
+        <div class="route-preview">
+          <div>
+            <div class="from">${data.get('from_address')}</div>
+            <div class="route-arrow">↓</div>
+            <div class="to">${data.get('to_address')}</div>
+          </div>
+        </div>
+      </div>`;
+      
+      // Price
+      html += `<div class="preview-item">
+        <strong>${translations[currentLang].price}</strong>
+        ${data.get('price')} ₸
+      </div>`;
+      
+      // Departure time
+      const departureTime = new Date(data.get('departure_time'));
+      html += `<div class="preview-item">
+        <strong>${translations[currentLang].departureTime}</strong>
+        ${departureTime.toLocaleString(currentLang === 'ru' ? 'ru-RU' : 'kk-KZ')}
+      </div>`;
+      
+      // Comment
+      if (data.get('comment')) {
+        html += `<div class="preview-item">
+          <strong>${translations[currentLang].comment}</strong>
+          ${data.get('comment')}
+        </div>`;
+      }
+      
+      document.getElementById('previewContent').innerHTML = html;
+      return true;
+    }
+
+    // Main button handler
+    Telegram.WebApp.onEvent('mainButtonClicked', () => {
+      if (currentStep === 1) {
+        if (buildPreview()) {
+          show(2);
+        }
+      } else if (currentStep === 2) {
+        submitRequest();
+      }
+    });
+
+    // Submit request
+    async function submitRequest() {
+      document.getElementById('step2').classList.add('loading');
+      Telegram.WebApp.MainButton.showProgress();
+      
+      const fd = new FormData(document.getElementById('requestForm'));
+      
+      try {
+        const response = await fetch('/api/driver/request', {
+          method: 'POST',
+          body: fd
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        Telegram.WebApp.MainButton.hideProgress();
+        document.getElementById('step2').classList.remove('loading');
+        
+        if (result.success) {
+          show(3);
+        } else {
+          Telegram.WebApp.showAlert(result.message || translations[currentLang].error);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        Telegram.WebApp.MainButton.hideProgress();
+        document.getElementById('step2').classList.remove('loading');
+        Telegram.WebApp.showAlert(translations[currentLang].error + ': ' + error.message);
+      }
+    }
+
+    // Load client requests
+    async function loadClientRequests() {
+      const container = document.getElementById('clientRequests');
+      container.innerHTML = `<div class="empty-state">
+        <div class="empty-icon">⏳</div>
+        <div class="empty-text">${translations[currentLang].loading}</div>
+      </div>`;
+      
+      try {
+        // Get current user's location for filtering (optional)
+        let params = '';
+        if (currentUserLocation && locationPermissionGranted) {
+          params = `?driver_lat=${currentUserLocation[0]}&driver_lon=${currentUserLocation[1]}&radius=50`;
+        }
+        
+        const response = await fetch('/api/client/requests' + params);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Client Requests API Response:', data); // Debug log
+        
+        if (data.requests && data.requests.length > 0) {
+          displayClientRequests(data.requests);
+        } else if (data && Array.isArray(data)) {
+          // Handle case where API returns array directly
+          displayClientRequests(data);
+        } else {
+          container.innerHTML = `<div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <div class="empty-text">${translations[currentLang].noRequests}</div>
+          </div>`;
+        }
+      } catch (error) {
+        console.error('Error loading client requests:', error);
+        container.innerHTML = `<div class="empty-state">
+          <div class="empty-icon">❌</div>
+          <div class="empty-text">
+            ${translations[currentLang].error}: ${error.message}
+          </div>
+        </div>`;
+      }
+    }
+
+    // Display client requests
+    function displayClientRequests(requests) {
+      const container = document.getElementById('clientRequests');
+      container.innerHTML = '';
+      
+      if (!requests || requests.length === 0) {
+        container.innerHTML = `<div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <div class="empty-text">${translations[currentLang].noRequests}</div>
+        </div>`;
+        return;
+      }
+      
+      requests.forEach(request => {
+        const card = document.createElement('div');
+        card.className = 'request-card';
+        card.onclick = () => showRequestDetail(request);
+        
+        const truckTypes = {
+          'small': { icon: '🚐', name: translations[currentLang].small },
+          'medium': { icon: '🚚', name: translations[currentLang].medium },
+          'large': { icon: '🚛', name: translations[currentLang].large },
+          'refrigerator': { icon: '❄️', name: translations[currentLang].refrigerator },
+          'tow': { icon: '🚗', name: translations[currentLang].tow }
+        };
+        
+        const truck = truckTypes[request.truck_type] || truckTypes.medium;
+        
+        // Handle different possible field names from API
+        const fromAddress = request.from_address || request.fromAddress || 'Не указано';
+        const toAddress = request.to_address || request.toAddress || 'Не указано';
+        const price = request.price || 0;
+        const createdAt = request.created_at || request.createdAt || new Date();
+        
+        card.innerHTML = `
+          <div class="request-header">
+            <div class="truck-type-badge">
+              <span>${truck.icon}</span>
+              <span>${truck.name}</span>
+            </div>
+            <div class="request-price">${price} ₸</div>
+          </div>
+          <div class="request-route">
+            <div class="location from">📍 ${fromAddress}</div>
+            <div class="route-arrow">→</div>
+            <div class="location to">🎯 ${toAddress}</div>
+          </div>
+          <div class="request-details">
+            <div class="request-detail">
+              <span>📅</span>
+              <span>${new Date(createdAt).toLocaleDateString()}</span>
+            </div>
+            <div class="request-detail">
+              <span>📱</span>
+              <span>${request.contact || 'Не указан'}</span>
+            </div>
+            ${request.comment ? `
+              <div class="request-detail">
+                <span>💬</span>
+                <span>${request.comment.substring(0, 50)}...</span>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        
+        container.appendChild(card);
+      });
+    }
+
+    // Show request detail modal
+    let detailMap;
+    function showRequestDetail(request) {
+      const modal = document.getElementById('requestModal');
+      const content = document.getElementById('modalContent');
+      
+      // Handle different possible field names from API
+      const fromAddress = request.from_address || request.fromAddress || 'Не указано';
+      const toAddress = request.to_address || request.toAddress || 'Не указано';
+      const fromLat = request.from_lat || request.fromLat || 43.238949;
+      const fromLon = request.from_lon || request.fromLon || 76.889709;
+      const toLat = request.to_lat || request.toLat || 43.238949;
+      const toLon = request.to_lon || request.toLon || 76.889709;
+      const price = request.price || 0;
+      const contact = request.contact || 'Не указан';
+      const photoPath = request.photo_path || request.photoPath;
+      const truckType = request.truck_type || request.truckType || 'medium';
+      
+      const truckTypes = {
+        'small': translations[currentLang].small,
+        'medium': translations[currentLang].medium,
+        'large': translations[currentLang].large,
+        'refrigerator': translations[currentLang].refrigerator,
+        'tow': translations[currentLang].tow
+      };
+      
+      content.innerHTML = `
+        <div id="detailMap"></div>
+        
+        <div class="detail-section">
+          <div class="detail-label">${translations[currentLang].from}</div>
+          <div class="detail-value">📍 ${fromAddress}</div>
+        </div>
+        
+        <div class="detail-section">
+          <div class="detail-label">${translations[currentLang].to}</div>
+          <div class="detail-value">🎯 ${toAddress}</div>
+        </div>
+        
+        <div class="detail-section">
+          <div class="detail-label">${translations[currentLang].price}</div>
+          <div class="detail-value" style="font-size: 1.5rem; color: var(--accent-primary); font-weight: 700;">
+            ${price} ₸
+          </div>
+        </div>
+        
+        <div class="detail-section">
+          <div class="detail-label">${translations[currentLang].truckType}</div>
+          <div class="detail-value">${truckTypes[truckType] || truckTypes.medium}</div>
+        </div>
+        
+        ${request.comment ? `
+          <div class="detail-section">
+            <div class="detail-label">${translations[currentLang].comment}</div>
+            <div class="detail-value">${request.comment}</div>
+          </div>
+        ` : ''}
+        
+        ${photoPath ? `
+          <div class="detail-section">
+            <div class="detail-label">${translations[currentLang].clientPhoto}</div>
+            <img src="/files/client-item-photo/${photoPath}" alt="Client photo" class="client-photo" 
+                 onerror="this.style.display='none'">
+          </div>
+        ` : ''}
+        
+        <div class="detail-section">
+          <div class="detail-label">${translations[currentLang].contact}</div>
+          <div class="detail-value">${contact}</div>
+        </div>
+        
+        <div class="contact-buttons">
+          <button class="contact-btn call-btn" onclick="window.open('tel:${contact}')">
+            <span>📞</span>
+            <span>${translations[currentLang].call}</span>
+          </button>
+          <button class="contact-btn whatsapp-btn" onclick="window.open('https://wa.me/${contact.replace(/\D/g, '')}')">
+            <span>💬</span>
+            <span>WhatsApp</span>
+          </button>
+          <button class="contact-btn telegram-btn" onclick="window.open('https://t.me/${contact.replace(/\D/g, '')}')">
+            <span>✈️</span>
+            <span>Telegram</span>
+          </button>
+        </div>
+      `;
+      
+      modal.style.display = 'block';
+      
+      // Initialize detail map
+      setTimeout(() => {
+        ymaps.ready(() => {
+          detailMap = new ymaps.Map("detailMap", {
+            center: [fromLat, fromLon],
+            zoom: 12,
+            controls: [] // Remove all controls including zoom for clean look
+          });
+          
+          // Add markers
+          const fromMark = new ymaps.Placemark([fromLat, fromLon], {
+            hintContent: translations[currentLang].from,
+            balloonContent: fromAddress
+          }, {
+            preset: 'islands#greenIcon'
+          });
+          
+          const toMark = new ymaps.Placemark([toLat, toLon], {
+            hintContent: translations[currentLang].to,
+            balloonContent: toAddress
+          }, {
+            preset: 'islands#redIcon'
+          });
+          
+          detailMap.geoObjects.add(fromMark);
+          detailMap.geoObjects.add(toMark);
+          
+          // Draw route
+          ymaps.route([
+            [fromLat, fromLon],
+            [toLat, toLon]
+          ], {
+            mapStateAutoApply: true,
+            multiRoute: false
+          }).then(function (route) {
+            route.getPaths().options.set({
+              strokeColor: '3b82f6FF',
+              strokeWidth: 5,
+              opacity: 0.8
+            });
+            detailMap.geoObjects.add(route);
+            
+            // Fit route in view
+            detailMap.setBounds(route.getBounds(), {
+              checkZoomRange: true,
+              zoomMargin: 50
+            });
+          }).catch(function(error) {
+            console.error('Route error:', error);
+            // If route fails, just fit both points
+            detailMap.setBounds([
+              [Math.min(fromLat, toLat), Math.min(fromLon, toLon)],
+              [Math.max(fromLat, toLat), Math.max(fromLon, toLon)]
+            ], {
+              checkZoomRange: true,
+              zoomMargin: 100
+            });
+          });
+        });
+      }, 100);
+    }
+
+    // Close modal
+    function closeModal() {
+      document.getElementById('requestModal').style.display = 'none';
+      if (detailMap) {
+        detailMap.destroy();
+        detailMap = null;
+      }
+    }
+
+    // Close modal on click outside
+    document.getElementById('requestModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+
+    // Clean up location tracking on page unload
+    window.addEventListener('beforeunload', () => {
+      if (watchId) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+      if (locationInterval) {
+        clearInterval(locationInterval);
+      }
+    });
+
+    // Make functions available globally
+    window.selectOnMap = selectOnMap;
+    window.closeModal = closeModal;
+    window.setLang = setLang;
+    window.toggleMapSize = toggleMapSize;
+    window.requestLocationPermission = requestLocationPermission;
+    window.skipLocationPermission = skipLocationPermission;
+
+    // Initialize
+    show(1);
+    updateMainButtonText();
+  </script>
+</body>
+</html>
