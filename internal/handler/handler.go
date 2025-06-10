@@ -874,6 +874,124 @@ func (h *Handler) notifyNearbyDrivers(ctx context.Context, b *bot.Bot, request *
 	}
 }
 
+// GetDriverSearchHandler handles intelligent search for client orders
+func (h *Handler) GetDriverSearchHandler(w http.ResponseWriter, r *http.Request) {
+	h.setCORSHeaders(w)
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Get query parameters
+	telegramIDStr := r.URL.Query().Get("telegram_id")
+	searchType := r.URL.Query().Get("search_type") // "geolocation" or "route"
+
+	// For geolocation search
+	driverLat, _ := strconv.ParseFloat(r.URL.Query().Get("driver_lat"), 64)
+	driverLon, _ := strconv.ParseFloat(r.URL.Query().Get("driver_lon"), 64)
+	radiusKm, _ := strconv.ParseFloat(r.URL.Query().Get("radius"), 64)
+
+	// For route search
+	fromCity := r.URL.Query().Get("from_city")
+	toCity := r.URL.Query().Get("to_city")
+
+	if radiusKm == 0 {
+		radiusKm = 50.0 // Default 50km radius
+	}
+
+	telegramID, err := strconv.ParseInt(telegramIDStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid telegram ID", http.StatusBadRequest)
+		return
+	}
+
+	h.logger.Info("Driver search request",
+		zap.Int64("telegram_id", telegramID),
+		zap.String("search_type", searchType),
+		zap.Float64("driver_lat", driverLat),
+		zap.Float64("driver_lon", driverLon),
+		zap.Float64("radius", radiusKm),
+		zap.String("from_city", fromCity),
+		zap.String("to_city", toCity))
+
+	var requests []repository.ClientRequest
+	var searchErr error
+
+	// Get driver info for fallback location
+	driver, err := h.driverRepo.GetDriverByTelegramID(telegramID)
+	if err != nil && err != sql.ErrNoRows {
+		h.logger.Error("Error getting driver info", zap.Error(err))
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	if searchType == "geolocation" && driverLat != 0 && driverLon != 0 {
+		// Priority 1: Use current geolocation
+		h.logger.Info("Searching by geolocation", zap.Float64("lat", driverLat), zap.Float64("lon", driverLon))
+		requests, searchErr = h.clientRepo.GetRequestsNearLocation(driverLat, driverLon, radiusKm)
+	} else if searchType == "route" && fromCity != "" && toCity != "" {
+		// Priority 2: Search by route string match
+		h.logger.Info("Searching by route", zap.String("from", fromCity), zap.String("to", toCity))
+		requests, searchErr = h.clientRepo.GetRequestsByRoute(fromCity, toCity)
+	} else if driver != nil && driver.StartLat != 0 && driver.StartLon != 0 {
+		// Priority 3: Fallback to driver's registered start location
+		h.logger.Info("Searching by driver start location", zap.Float64("lat", driver.StartLat), zap.Float64("lon", driver.StartLon))
+		requests, searchErr = h.clientRepo.GetRequestsNearLocation(driver.StartLat, driver.StartLon, radiusKm)
+	} else {
+		// Priority 4: Get all active requests
+		h.logger.Info("Getting all active requests")
+		requests, searchErr = h.clientRepo.GetActiveRequests()
+	}
+
+	if searchErr != nil {
+		h.logger.Error("Error searching client requests", zap.Error(searchErr))
+		http.Error(w, "Failed to search requests", http.StatusInternalServerError)
+		return
+	}
+
+	h.logger.Info("Found requests", zap.Int("count", len(requests)))
+
+	// Convert to response format
+	var responseRequests []map[string]interface{}
+	for _, req := range requests {
+		responseReq := map[string]interface{}{
+			"id":           req.ID,
+			"client_id":    req.ClientID,
+			"from_address": req.FromAddress,
+			"to_address":   req.ToAddress,
+			"from_lat":     req.FromLat,
+			"from_lon":     req.FromLon,
+			"to_lat":       req.ToLat,
+			"to_lon":       req.ToLon,
+			"price":        req.Price,
+			"truck_type":   req.TruckType,
+			"comment":      req.Comment,
+			"contact":      req.Contact,
+			"photo_path":   req.PhotoPath,
+			"status":       req.Status,
+			"created_at":   req.CreatedAt,
+			"updated_at":   req.UpdatedAt,
+		}
+		responseRequests = append(responseRequests, responseReq)
+	}
+
+	response := map[string]interface{}{
+		"success":     true,
+		"requests":    responseRequests,
+		"search_type": searchType,
+		"count":       len(requests),
+	}
+
+	if driver != nil {
+		response["driver_start_city"] = driver.StartCity
+		response["driver_start_lat"] = driver.StartLat
+		response["driver_start_lon"] = driver.StartLon
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
 // Add this to your StartWebServer function in handler.go
 
 func (h *Handler) StartWebServer(ctx context.Context, b *bot.Bot) {
@@ -888,6 +1006,9 @@ func (h *Handler) StartWebServer(ctx context.Context, b *bot.Bot) {
 	http.HandleFunc("/api/driver/register", func(w http.ResponseWriter, r *http.Request) {
 		h.RegisterDriverHandler(w, r, ctx, b)
 	})
+	// NEW: Add the intelligent search endpoint
+	http.HandleFunc("/api/driver/search", h.GetDriverSearchHandler)
+
 	http.HandleFunc("/api/driver/request", h.CreateDriverRequestHandler)
 	http.HandleFunc("/api/client/requests", h.GetClientRequestsHandler)
 	http.HandleFunc("/api/client/check", h.CheckClientHandler)
@@ -920,6 +1041,10 @@ func (h *Handler) StartWebServer(ctx context.Context, b *bot.Bot) {
 
 	http.HandleFunc("/client", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/client.html")
+	})
+
+	http.HandleFunc("/welcome", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/welcome.html")
 	})
 
 	// Root handler

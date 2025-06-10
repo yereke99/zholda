@@ -198,21 +198,74 @@ func (cr *ClientRepository) UpdateRequestStatus(requestID int64, status string) 
 	return err
 }
 
-// GetClientsNearLocation returns clients who made recent requests near a location
-func (cr *ClientRepository) GetClientsNearLocation(lat, lon, radiusKm float64) ([]Client, error) {
-	// Get clients who made requests within the last 30 days and near the location
+// GetRequestsNearLocation returns client requests near a specific location
+func (cr *ClientRepository) GetRequestsNearLocation(lat, lon, radiusKm float64) ([]ClientRequest, error) {
+	// Using Haversine formula for accurate distance calculation
 	query := `
-		SELECT DISTINCT c.id, c.telegram_id, c.contact, c.offerta_accepted, c.created_at, c.updated_at
-		FROM client c
-		INNER JOIN client_request cr ON c.telegram_id = cr.client_id
-		WHERE cr.created_at > datetime('now', '-30 days')
-		AND ABS(cr.from_lat - ?) < ? 
-		AND ABS(cr.from_lon - ?) < ?
+		SELECT id, client_id, from_address, to_address,
+		       from_lat, from_lon, to_lat, to_lon,
+		       price, truck_type, comment, contact,
+		       photo_path, status, created_at, updated_at,
+		       (6371 * acos(cos(radians(?)) * cos(radians(from_lat)) * 
+		        cos(radians(from_lon) - radians(?)) + 
+		        sin(radians(?)) * sin(radians(from_lat)))) AS distance
+		FROM client_request
+		WHERE status = 'active'
+		HAVING distance < ?
+		ORDER BY distance ASC, created_at DESC
+		LIMIT 50
 	`
 
+	rows, err := cr.db.Query(query, lat, lon, lat, radiusKm)
+	if err != nil {
+		// Fallback to simpler query if Haversine fails
+		return cr.getRequestsNearLocationSimple(lat, lon, radiusKm)
+	}
+	defer rows.Close()
+
+	var requests []ClientRequest
+	for rows.Next() {
+		var req ClientRequest
+		var distance float64
+		err := rows.Scan(
+			&req.ID, &req.ClientID, &req.FromAddress, &req.ToAddress,
+			&req.FromLat, &req.FromLon, &req.ToLat, &req.ToLon,
+			&req.Price, &req.TruckType, &req.Comment, &req.Contact,
+			&req.PhotoPath, &req.Status, &req.CreatedAt, &req.UpdatedAt,
+			&distance,
+		)
+		if err != nil {
+			continue // Skip invalid rows
+		}
+		requests = append(requests, req)
+	}
+
+	if len(requests) == 0 {
+		// Fallback to simple method if no results
+		return cr.getRequestsNearLocationSimple(lat, lon, radiusKm)
+	}
+
+	return requests, nil
+}
+
+// getRequestsNearLocationSimple is a fallback method using simple coordinate comparison
+func (cr *ClientRepository) getRequestsNearLocationSimple(lat, lon, radiusKm float64) ([]ClientRequest, error) {
 	// Rough conversion: 1 degree ≈ 111 km
 	latDiff := radiusKm / 111.0
 	lonDiff := radiusKm / (111.0 * math.Cos(lat*math.Pi/180.0))
+
+	query := `
+		SELECT id, client_id, from_address, to_address,
+		       from_lat, from_lon, to_lat, to_lon,
+		       price, truck_type, comment, contact,
+		       photo_path, status, created_at, updated_at
+		FROM client_request
+		WHERE status = 'active'
+		AND ABS(from_lat - ?) < ? 
+		AND ABS(from_lon - ?) < ?
+		ORDER BY created_at DESC
+		LIMIT 50
+	`
 
 	rows, err := cr.db.Query(query, lat, latDiff, lon, lonDiff)
 	if err != nil {
@@ -220,23 +273,97 @@ func (cr *ClientRepository) GetClientsNearLocation(lat, lon, radiusKm float64) (
 	}
 	defer rows.Close()
 
-	var clients []Client
+	var requests []ClientRequest
 	for rows.Next() {
-		var client Client
+		var req ClientRequest
 		err := rows.Scan(
-			&client.ID, &client.TelegramID, &client.Contact,
-			&client.OffertaAccepted, &client.CreatedAt, &client.UpdatedAt,
+			&req.ID, &req.ClientID, &req.FromAddress, &req.ToAddress,
+			&req.FromLat, &req.FromLon, &req.ToLat, &req.ToLon,
+			&req.Price, &req.TruckType, &req.Comment, &req.Contact,
+			&req.PhotoPath, &req.Status, &req.CreatedAt, &req.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		// Calculate actual distance for more precise filtering
-		// You might want to add a more sophisticated distance calculation here
-		clients = append(clients, client)
+		distance := cr.calculateDistance(lat, lon, req.FromLat, req.FromLon)
+		if distance <= radiusKm {
+			requests = append(requests, req)
+		}
 	}
 
-	return clients, nil
+	return requests, nil
+}
+
+// GetRequestsByRoute returns client requests matching route cities
+func (cr *ClientRepository) GetRequestsByRoute(fromCity, toCity string) ([]ClientRequest, error) {
+	query := `
+		SELECT id, client_id, from_address, to_address,
+		       from_lat, from_lon, to_lat, to_lon,
+		       price, truck_type, comment, contact,
+		       photo_path, status, created_at, updated_at
+		FROM client_request
+		WHERE status = 'active'
+		AND (
+			(LOWER(from_address) LIKE LOWER(?) OR LOWER(from_address) LIKE LOWER(?))
+			AND (LOWER(to_address) LIKE LOWER(?) OR LOWER(to_address) LIKE LOWER(?))
+		)
+		ORDER BY created_at DESC
+		LIMIT 50
+	`
+
+	fromPattern1 := "%" + fromCity + "%"
+	fromPattern2 := fromCity + "%"
+	toPattern1 := "%" + toCity + "%"
+	toPattern2 := toCity + "%"
+
+	rows, err := cr.db.Query(query, fromPattern1, fromPattern2, toPattern1, toPattern2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var requests []ClientRequest
+	for rows.Next() {
+		var req ClientRequest
+		err := rows.Scan(
+			&req.ID, &req.ClientID, &req.FromAddress, &req.ToAddress,
+			&req.FromLat, &req.FromLon, &req.ToLat, &req.ToLon,
+			&req.Price, &req.TruckType, &req.Comment, &req.Contact,
+			&req.PhotoPath, &req.Status, &req.CreatedAt, &req.UpdatedAt,
+		)
+		if err != nil {
+			continue
+		}
+		requests = append(requests, req)
+	}
+
+	return requests, nil
+}
+
+// GetRequestsInRegion returns requests within a broader region (for fallback)
+func (cr *ClientRepository) GetRequestsInRegion(lat, lon float64) ([]ClientRequest, error) {
+	// Get requests within 200km radius as fallback
+	return cr.GetRequestsNearLocation(lat, lon, 200.0)
+}
+
+// calculateDistance calculates the distance between two points using the Haversine formula
+func (cr *ClientRepository) calculateDistance(lat1, lon1, lat2, lon2 float64) float64 {
+	const R = 6371 // Earth's radius in kilometers
+
+	lat1Rad := lat1 * math.Pi / 180
+	lat2Rad := lat2 * math.Pi / 180
+	deltaLat := (lat2 - lat1) * math.Pi / 180
+	deltaLon := (lon2 - lon1) * math.Pi / 180
+
+	a := math.Sin(deltaLat/2)*math.Sin(deltaLat/2) +
+		math.Cos(lat1Rad)*math.Cos(lat2Rad)*
+			math.Sin(deltaLon/2)*math.Sin(deltaLon/2)
+
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	return R * c
 }
 
 // SaveJustClickedUser saves a user who just clicked start

@@ -6,9 +6,11 @@ import (
 	"database/sql"
 	"os"
 	"os/signal"
+	"syscall"
 	"zholda/config"
 	"zholda/internal/handler"
 	"zholda/internal/repository"
+	"zholda/traits/database"
 	"zholda/traits/logger"
 
 	"github.com/go-telegram/bot"
@@ -16,29 +18,11 @@ import (
 	"go.uber.org/zap"
 )
 
-// createTables creates all necessary tables if they don't exist
-func createTables(db *sql.DB) error {
-	// Create driver tables
-	if err := repository.CreateDriverTables(db); err != nil {
-		return err
-	}
-
-	// Create client tables
-	if err := repository.CreateClientTables(db); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func main() {
 	zapLogger, err := logger.NewLogger()
 	if err != nil {
 		panic(err)
 	}
-
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
 
 	cfg, err := config.NewConfig()
 	if err != nil {
@@ -54,7 +38,7 @@ func main() {
 	defer db.Close()
 
 	// Create tables if not exists
-	if err := createTables(db); err != nil {
+	if err := database.CreateTables(db); err != nil {
 		zapLogger.Fatal("Failed to create tables", zap.Error(err))
 	}
 
@@ -76,9 +60,18 @@ func main() {
 		return
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+	go func() {
+		<-stop
+		zapLogger.Info("Bot stoppped successfully")
+		cancel()
+	}()
+
 	// Start web server in goroutine
 	go h.StartWebServer(ctx, b)
 
-	zapLogger.Info("Bot started successfully")
 	b.Start(ctx)
+	zapLogger.Info("Bot started successfully")
 }

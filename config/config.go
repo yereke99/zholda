@@ -17,7 +17,7 @@ type Config struct {
 func NewConfig() (*Config, error) {
 	cfg := &Config{
 		Port:    ":8080",
-		Token:   "8104980731:AAEN8KGxAwwfmPWa3s2yiPO7_EP-Cq2wbco",
+		Token:   "7654139572:AAGpRqJa7d_bJNE9bYydJgcwASUbfHjP8Os",
 		BaseURL: "https://yourdomain.com", // Update this with your actual domain
 		DBName:  "zholda.db",
 	}

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZholDa Demo GIF - Animated</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .animation-container {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+            background: #000;
+        }
+        .download-btn {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .download-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+        .instructions {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+            max-width: 600px;
+        }
+        .instructions h3 {
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚚 ZholDa Demo Animation - 640x360</h1>
+        <p>Dynamic logistics platform demonstration</p>
+        
+        <div class="animation-container">
+            <canvas id="animationCanvas" width="640" height="360"></canvas>
+        </div>
+        
+        <div class="status" id="status">Loading animation...</div>
+        
+        <button class="download-btn" onclick="startRecording()">🎬 Record GIF</button>
+        <button class="download-btn" onclick="downloadGIF()" id="downloadBtn" disabled>🔽 Download GIF</button>
+        <button class="download-btn" onclick="toggleAnimation()" id="toggleBtn">⏸️ Pause</button>
+        
+        <div class="instructions">
+            <h3>🎥 How to Create GIF:</h3>
+            <ol>
+                <li><strong>Click "Record GIF"</strong> to start capturing</li>
+                <li><strong>Wait 6 seconds</strong> for full animation cycle</li>
+                <li><strong>Click "Download GIF"</strong> when ready</li>
+                <li><strong>Alternative:</strong> Use screen recording software while animation plays</li>
+            </ol>
+            
+            <h3>🎞️ Animation Features:</h3>
+            <ul>
+                <li>✅ <strong>Truck movement</strong> across Kazakhstan routes</li>
+                <li>✅ <strong>Route line animations</strong> showing connections</li>
+                <li>✅ <strong>Location pin pulses</strong> for major cities</li>
+                <li>✅ <strong>Package/cargo indicators</strong></li>
+                <li>✅ <strong>ZholDa branding</strong> with smooth transitions</li>
+                <li>✅ <strong>Professional quality</strong> 640x360 resolution</li>
+            </ul>
+            
+            <h3>🛠️ Technical Details:</h3>
+            <p><strong>Duration:</strong> 6 seconds loop<br>
+            <strong>FPS:</strong> 30 frames per second<br>
+            <strong>Size:</strong> 640x360 pixels<br>
+            <strong>Format:</strong> Optimized for web and social media</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.min.js"></script>
+    <script>
+        const canvas = document.getElementById('animationCanvas');
+        const ctx = canvas.getContext('2d');
+        const width = 640;
+        const height = 360;
+        
+        let animationId;
+        let isAnimating = true;
+        let startTime = Date.now();
+        let gif = null;
+        let isRecording = false;
+        
+        // Animation variables
+        let truckPosition = 0;
+        let routeProgress = 0;
+        let pulsePhase = 0;
+        
+        // Colors
+        const colors = {
+            bg: ['#1e40af', '#3b82f6', '#10b981', '#059669'],
+            route: '#fbbf24',
+            truck: '#ffffff',
+            accent: '#f59e0b'
+        };
+        
+        // Create gradient background
+        function createBackground(time) {
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
+            const t = (time * 0.001) % 1;
+            
+            gradient.addColorStop(0, colors.bg[0]);
+            gradient.addColorStop(0.33, colors.bg[1]);
+            gradient.addColorStop(0.66, colors.bg[2]);
+            gradient.addColorStop(1, colors.bg[3]);
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+            
+            // Add overlay
+            const overlay = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width/2);
+            overlay.addColorStop(0, 'rgba(255,255,255,0.1)');
+            overlay.addColorStop(1, 'rgba(0,0,0,0.2)');
+            ctx.fillStyle = overlay;
+            ctx.fillRect(0, 0, width, height);
+        }
+        
+        // Draw decorative circles
+        function drawDecorations(time) {
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 2;
+            
+            const t = (time * 0.0005) % 1;
+            
+            // Animated circles
+            ctx.beginPath();
+            ctx.arc(120, 80, 60 + Math.sin(t * Math.PI * 2) * 5, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(520, 280, 80 + Math.cos(t * Math.PI * 2) * 8, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(320, 180, 120 + Math.sin(t * Math.PI * 3) * 10, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
+        // Draw animated route lines
+        function drawRoutes(time) {
+            const progress = ((time * 0.002) % 1);
+            
+            ctx.strokeStyle = colors.route;
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            
+            // Main route with animation
+            drawAnimatedPath([
+                {x: 50, y: 180},
+                {x: 200, y: 160},
+                {x: 320, y: 140},
+                {x: 440, y: 160},
+                {x: 590, y: 180}
+            ], progress, 0.8);
+            
+            ctx.lineWidth = 4;
+            // Secondary routes
+            drawAnimatedPath([
+                {x: 100, y: 120},
+                {x: 320, y: 160},
+                {x: 540, y: 140}
+            ], (progress + 0.3) % 1, 0.6);
+            
+            drawAnimatedPath([
+                {x: 100, y: 240},
+                {x: 320, y: 200},
+                {x: 540, y: 220}
+            ], (progress + 0.6) % 1, 0.6);
+        }
+        
+        function drawAnimatedPath(points, progress, opacity) {
+            ctx.globalAlpha = opacity;
+            ctx.beginPath();
+            
+            const totalLength = points.length - 1;
+            const currentLength = progress * totalLength;
+            
+            for (let i = 0; i < Math.floor(currentLength); i++) {
+                if (i === 0) {
+                    ctx.moveTo(points[i].x, points[i].y);
+                } else {
+                    ctx.lineTo(points[i].x, points[i].y);
+                }
+            }
+            
+            // Draw partial segment
+            if (currentLength % 1 > 0 && Math.floor(currentLength) < points.length - 1) {
+                const i = Math.floor(currentLength);
+                const t = currentLength % 1;
+                const x = points[i].x + (points[i + 1].x - points[i].x) * t;
+                const y = points[i].y + (points[i + 1].y - points[i].y) * t;
+                ctx.lineTo(x, y);
+            }
+            
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+        
+        // Draw location pins with pulse animation
+        function drawLocationPins(time) {
+            const pulse = Math.sin(time * 0.003) * 0.3 + 0.7;
+            
+            // Almaty (red)
+            drawPin(90, 180, '#ef4444', pulse);
+            
+            // Astana (blue)
+            drawPin(320, 140, '#3b82f6', (pulse + 0.33) % 1);
+            
+            // Shymkent (green)
+            drawPin(550, 180, '#22c55e', (pulse + 0.66) % 1);
+        }
+        
+        function drawPin(x, y, color, scale) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+            
+            // Outer circle
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(0, 0, 10, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Inner white circle
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(0, 0, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Center dot
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(0, 0, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+        
+        // Draw animated truck
+        function drawTruck(time) {
+            const progress = ((time * 0.001) % 1);
+            const x = 100 + Math.sin(progress * Math.PI * 2) * 200;
+            const y = 180 + Math.cos(progress * Math.PI * 4) * 20;
+            
+            ctx.save();
+            ctx.translate(x, y);
+            
+            // Truck shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(-20, 25, 60, 8);
+            
+            // Truck body
+            ctx.fillStyle = colors.truck;
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 2;
+            
+            // Main container
+            ctx.fillRect(5, -15, 35, 20);
+            ctx.strokeRect(5, -15, 35, 20);
+            
+            // Cabin
+            ctx.fillRect(-15, -12, 20, 17);
+            ctx.strokeRect(-15, -12, 20, 17);
+            
+            // Windows
+            ctx.fillStyle = '#3b82f6';
+            ctx.globalAlpha = 0.8;
+            ctx.fillRect(-12, -9, 6, 5);
+            ctx.fillRect(-4, -9, 6, 5);
+            ctx.globalAlpha = 1;
+            
+            // Wheels with rotation
+            const wheelRotation = progress * Math.PI * 8;
+            drawWheel(-8, 8, wheelRotation);
+            drawWheel(25, 8, wheelRotation);
+            
+            // ZholDa logo
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(10, -8, 20, 6);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 4px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('ZholDa', 20, -4);
+            
+            // Cargo indicators
+            ctx.fillStyle = colors.accent;
+            ctx.globalAlpha = 0.8;
+            for (let i = 0; i < 3; i++) {
+                ctx.fillRect(8 + i * 5, -12, 2, 2);
+            }
+            ctx.globalAlpha = 1;
+            
+            ctx.restore();
+        }
+        
+        function drawWheel(x, y, rotation) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation);
+            
+            // Tire
+            ctx.fillStyle = '#374151';
+            ctx.beginPath();
+            ctx.arc(0, 0, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Rim
+            ctx.fillStyle = '#6b7280';
+            ctx.beginPath();
+            ctx.arc(0, 0, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Center
+            ctx.fillStyle = '#9ca3af';
+            ctx.beginPath();
+            ctx.arc(0, 0, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Spokes
+            ctx.strokeStyle = '#9ca3af';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 4; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(Math.cos(i * Math.PI / 2) * 3, Math.sin(i * Math.PI / 2) * 3);
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+        }
+        
+        // Draw speed lines
+        function drawSpeedLines(time) {
+            const offset = (time * 0.01) % 20;
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            
+            for (let i = 0; i < 4; i++) {
+                const x = 80 - offset + i * 5;
+                const y = 160 + i * 10;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + 20, y + 5);
+                ctx.stroke();
+            }
+        }
+        
+        // Draw text and branding
+        function drawBranding(time) {
+            const pulse = Math.sin(time * 0.002) * 0.1 + 0.9;
+            
+            // Main title
+            ctx.save();
+            ctx.scale(pulse, pulse);
+            ctx.translate(width / 2 / pulse, height / 2 / pulse);
+            
+            // Text shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('ZholDa', 2, 122);
+            
+            // Main text
+            const gradient = ctx.createLinearGradient(-150, 0, 150, 0);
+            gradient.addColorStop(0, '#ffffff');
+            gradient.addColorStop(0.5, '#f8fafc');
+            gradient.addColorStop(1, '#e2e8f0');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillText('ZholDa', 0, 120);
+            
+            // Subtitle
+            ctx.font = '18px Arial';
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = 0.9;
+            ctx.fillText('KAZAKHSTAN LOGISTICS PLATFORM', 0, 150);
+            
+            // Kazakh subtitle
+            ctx.font = '14px Arial';
+            ctx.globalAlpha = 0.7;
+            ctx.fillText('Жылдам • Сенімді • Қауіпсіз', 0, 170);
+            
+            ctx.restore();
+        }
+        
+        // Main animation loop
+        function animate() {
+            if (!isAnimating) return;
+            
+            const currentTime = Date.now() - startTime;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw all elements
+            createBackground(currentTime);
+            drawDecorations(currentTime);
+            drawRoutes(currentTime);
+            drawLocationPins(currentTime);
+            drawSpeedLines(currentTime);
+            drawTruck(currentTime);
+            drawBranding(currentTime);
+            
+            // Record frame if recording
+            if (isRecording && gif) {
+                gif.addFrame(canvas, {delay: 33}); // ~30 FPS
+            }
+            
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        // Recording functions
+        function startRecording() {
+            if (isRecording) return;
+            
+            document.getElementById('status').textContent = 'Recording GIF... (6 seconds)';
+            document.querySelector('button[onclick="startRecording()"]').disabled = true;
+            
+            gif = new GIF({
+                workers: 2,
+                quality: 10,
+                width: width,
+                height: height,
+                workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'
+            });
+            
+            isRecording = true;
+            startTime = Date.now();
+            
+            // Stop recording after 6 seconds (full loop)
+            setTimeout(() => {
+                stopRecording();
+            }, 6000);
+        }
+        
+        function stopRecording() {
+            if (!isRecording) return;
+            
+            isRecording = false;
+            document.getElementById('status').textContent = 'Processing GIF...';
+            
+            gif.on('finished', function(blob) {
+                const url = URL.createObjectURL(blob);
+                document.getElementById('downloadBtn').disabled = false;
+                document.getElementById('downloadBtn').onclick = () => {
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'zholda-demo-animation.gif';
+                    a.click();
+                };
+                document.getElementById('status').textContent = 'GIF ready for download!';
+                document.querySelector('button[onclick="startRecording()"]').disabled = false;
+            });
+            
+            gif.render();
+        }
+        
+        function downloadGIF() {
+            // This will be set up after recording is complete
+        }
+        
+        function toggleAnimation() {
+            isAnimating = !isAnimating;
+            const btn = document.getElementById('toggleBtn');
+            
+            if (isAnimating) {
+                btn.textContent = '⏸️ Pause';
+                startTime = Date.now() - (startTime || 0);
+                animate();
+            } else {
+                btn.textContent = '▶️ Play';
+                cancelAnimationFrame(animationId);
+            }
+        }
+        
+        // Start animation
+        animate();
+        document.getElementById('status').textContent = 'Animation ready - click "Record GIF" to create downloadable file';
+    </script>
+</body>
+</html>
