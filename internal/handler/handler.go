@@ -993,7 +993,6 @@ func (h *Handler) GetDriverSearchHandler(w http.ResponseWriter, r *http.Request)
 }
 
 // Add this to your StartWebServer function in handler.go
-
 func (h *Handler) StartWebServer(ctx context.Context, b *bot.Bot) {
 	// API routes
 	http.HandleFunc("/api/driver/check", h.CheckDriverHandler)

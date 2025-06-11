@@ -156,11 +156,10 @@
     .page {
       display: none;
       width: 100%;
-      max-width: 600px;
       margin: 0 auto;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 24px;
+      border-radius: 0;
       box-shadow: var(--shadow-xl);
       padding: 32px;
       backdrop-filter: blur(12px);
@@ -621,6 +620,7 @@
       margin-top: 20px;
     }
 
+    /* Enhanced Request Card Styles with Photos */
     .request-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -631,12 +631,34 @@
       cursor: pointer;
       position: relative;
       overflow: hidden;
+      box-shadow: var(--shadow-sm);
     }
 
     .request-card:hover {
       transform: translateY(-2px);
       box-shadow: var(--shadow-md);
       border-color: var(--accent-primary);
+    }
+
+    .request-photo {
+      width: 100%;
+      margin: 15px 0;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .request-item-photo {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 12px;
+      transition: transform 0.3s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .request-item-photo:hover {
+      transform: scale(1.02);
     }
 
     .request-header {
@@ -650,11 +672,15 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 10px;
+      margin: 15px 0;
+      padding: 15px;
+      background: var(--input-bg);
+      border-radius: 12px;
     }
 
     .request-route .location {
       flex: 1;
+      font-weight: 500;
     }
 
     .request-route .from {
@@ -667,17 +693,28 @@
       font-weight: 600;
     }
 
+    .request-route .route-arrow {
+      color: var(--accent-primary);
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
     .request-price {
-      font-size: 1.25rem;
+      font-size: 1.4rem;
       font-weight: 700;
       color: var(--accent-primary);
+      background: var(--nav-hover);
+      padding: 8px 12px;
+      border-radius: 8px;
     }
 
     .request-details {
       display: flex;
-      gap: 20px;
+      gap: 15px;
       flex-wrap: wrap;
-      margin-top: 10px;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid var(--card-border);
       font-size: 0.9rem;
       color: var(--text-muted);
     }
@@ -685,18 +722,22 @@
     .request-detail {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
+      background: var(--input-bg);
+      padding: 6px 10px;
+      border-radius: 6px;
     }
 
     .truck-type-badge {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 8px;
       background: var(--nav-hover);
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 0.85rem;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 0.9rem;
       font-weight: 600;
+      border: 1px solid var(--card-border);
     }
 
     /* Client Request Detail Modal */
@@ -997,79 +1038,185 @@
       box-shadow: var(--shadow-md);
     }
 
-    /* Mobile */
+/* Enhanced photo display styles */
+.modal-photo-container {
+  width: 100%;
+  text-align: center;
+  margin: 15px 0;
+}
+
+.modal-item-photo {
+  width: 100%;
+  max-width: 400px;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-md);
+}
+
+.modal-item-photo:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Full-size photo modal */
+.full-size-photo-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.full-size-photo-content {
+  position: relative;
+  max-width: 95vw;
+  max-height: 95vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.full-size-photo {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: var(--shadow-xl);
+  animation: slideIn 0.3s ease;
+}
+
+.full-size-close-btn {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+  z-index: 3001;
+}
+
+.full-size-close-btn:hover {
+  background: white;
+  transform: scale(1.1);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Enhanced contact buttons */
+.contact-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 25px;
+}
+
+.contact-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.call-btn {
+  background: var(--success-gradient);
+  color: white;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.whatsapp-btn {
+  background: linear-gradient(135deg, #25D366 0%, #20ba5a 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+}
+
+.telegram-btn {
+  background: linear-gradient(135deg, #0088cc 0%, #006699 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 136, 204, 0.3);
+}
+
+.contact-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.contact-btn:active {
+  transform: translateY(0);
+}
+
+    /* Mobile optimizations for photos */
     @media (max-width: 480px) {
-      .content-wrapper {
-        padding: 12px;
-        padding-bottom: 80px;
+    .content-wrapper {
+      padding: 12px; /* Keep this for mobile */
+      padding-bottom: 80px;
+    }
+
+    .page {
+      padding: 24px 20px; /* Adjust padding for mobile */
+      border-radius: 0; /* Keep full width on mobile too */
+      max-width: 100%; /* Ensure full width on mobile */
+    }
+      .modal-item-photo {
+        max-height: 200px;
       }
 
-      .lang-switch {
-        top: 12px;
-        right: 12px;
-      }
 
-      .lang-switch button {
-        padding: 6px 14px;
-        font-size: 0.8rem;
-      }
-
-      .page {
-        padding: 24px 20px;
-        border-radius: 20px;
-        max-width: 100%;
-      }
-
-      h1 {
-        font-size: 1.3rem;
-        margin-bottom: 16px;
-      }
-
-      #mapContainer {
-        height: 250px;
-      }
-
-      #mapContainer.expanded {
-        height: 350px;
-      }
-
-      .btn {
-        padding: 14px 24px;
-        font-size: 0.95rem;
-      }
-
-      .form-group {
-        margin-bottom: 20px;
-      }
-
-      input[type="text"],
-      input[type="number"],
-      input[type="datetime-local"],
-      textarea {
-        padding: 12px 16px;
-        font-size: 16px; /* Prevents zoom on iOS */
-      }
-
-      .button-group {
+      .contact-buttons {
         flex-direction: column;
         gap: 10px;
       }
 
-      .nav-btn {
-        width: 100%;
+      .full-size-close-btn {
+        top: 10px;
+        right: 10px;
+        width: 36px;
+        height: 36px;
+        font-size: 1.3rem;
       }
 
-      .modal-content {
-        width: 95%;
+      .full-size-photo-content {
+        max-width: 100vw;
+        max-height: 100vh;
         padding: 20px;
       }
+    }
 
-      .contact-buttons {
-        flex-direction: column;
-      }
-
+    /* Mobile optimizations for request cards */
+    @media (max-width: 480px) {
       .request-card {
         padding: 15px;
+        margin-bottom: 12px;
+      }
+
+      .request-item-photo {
+        height: 150px;
       }
 
       .request-header {
@@ -1078,17 +1225,24 @@
         gap: 10px;
       }
 
+      .request-route {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+      }
+
+      .request-route .route-arrow {
+        transform: rotate(90deg);
+      }
+
       .request-details {
         flex-direction: column;
         gap: 8px;
       }
 
-      .permission-content {
-        padding: 25px 20px;
-      }
-
-      .permission-buttons {
-        flex-direction: column;
+      .request-price {
+        font-size: 1.2rem;
+        align-self: flex-end;
       }
     }
   </style>
@@ -1969,7 +2123,7 @@
       }
     }
 
-    // Load client requests
+    // Load client requests with intelligent search
     async function loadClientRequests() {
       const container = document.getElementById('clientRequests');
       container.innerHTML = `<div class="empty-state">
@@ -1978,30 +2132,56 @@
       </div>`;
       
       try {
-        // Get current user's location for filtering (optional)
-        let params = '';
+        // Get current user's telegram ID
+        const telegramId = document.getElementById('telegram_id').value;
+        if (!telegramId) {
+          throw new Error('Telegram ID not found');
+        }
+
+        // Build search parameters based on available data
+        let searchParams = new URLSearchParams({
+          telegram_id: telegramId
+        });
+
+        // Priority 1: Use current geolocation if available
         if (currentUserLocation && locationPermissionGranted) {
-          params = `?driver_lat=${currentUserLocation[0]}&driver_lon=${currentUserLocation[1]}&radius=50`;
+          searchParams.append('search_type', 'geolocation');
+          searchParams.append('driver_lat', currentUserLocation[0]);
+          searchParams.append('driver_lon', currentUserLocation[1]);
+          searchParams.append('radius', '50'); // 50km radius
+          console.log("Using geolocation search");
+        } 
+        // Priority 2: Use route search if form data is available
+        else if (document.getElementById('from_address').value && document.getElementById('to_address').value) {
+          searchParams.append('search_type', 'route');
+          searchParams.append('from_city', document.getElementById('from_address').value);
+          searchParams.append('to_city', document.getElementById('to_address').value);
+          console.log("Using route search");
+        }
+        // Priority 3: Fallback to driver's registered start location (handled by backend)
+        else {
+          searchParams.append('search_type', 'fallback');
+          console.log("Using fallback search");
         }
         
-        const response = await fetch('/api/client/requests' + params);
+        const response = await fetch('/api/driver/search?' + searchParams.toString());
         
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const data = await response.json();
-        console.log('Client Requests API Response:', data); // Debug log
+        console.log('Driver Search API Response:', data);
         
-        if (data.requests && data.requests.length > 0) {
+        if (data.success && data.requests && data.requests.length > 0) {
           displayClientRequests(data.requests);
-        } else if (data && Array.isArray(data)) {
-          // Handle case where API returns array directly
-          displayClientRequests(data);
         } else {
           container.innerHTML = `<div class="empty-state">
             <div class="empty-icon">📭</div>
             <div class="empty-text">${translations[currentLang].noRequests}</div>
+            <div style="margin-top: 10px; font-size: 0.9rem; color: var(--text-muted);">
+              Search type: ${data.search_type || 'unknown'}
+            </div>
           </div>`;
         }
       } catch (error) {
@@ -2015,7 +2195,7 @@
       }
     }
 
-    // Display client requests
+    // Display client requests with photos like Indrive app
     function displayClientRequests(requests) {
       const container = document.getElementById('clientRequests');
       container.innerHTML = '';
@@ -2048,6 +2228,19 @@
         const toAddress = request.to_address || request.toAddress || 'Не указано';
         const price = request.price || 0;
         const createdAt = request.created_at || request.createdAt || new Date();
+        const photoPath = request.photo_path || request.photoPath;
+        
+        // Create photo section
+        let photoSection = '';
+        if (photoPath) {
+          photoSection = `
+            <div class="request-photo">
+              <img src="/files/${photoPath}" 
+                  alt="Item photo" 
+                  class="request-item-photo"
+                  onerror="this.parentElement.style.display='none'">
+            </div>`;
+        }
         
         card.innerHTML = `
           <div class="request-header">
@@ -2057,11 +2250,15 @@
             </div>
             <div class="request-price">${price} ₸</div>
           </div>
+          
+          ${photoSection}
+          
           <div class="request-route">
             <div class="location from">📍 ${fromAddress}</div>
             <div class="route-arrow">→</div>
             <div class="location to">🎯 ${toAddress}</div>
           </div>
+          
           <div class="request-details">
             <div class="request-detail">
               <span>📅</span>
@@ -2074,7 +2271,7 @@
             ${request.comment ? `
               <div class="request-detail">
                 <span>💬</span>
-                <span>${request.comment.substring(0, 50)}...</span>
+                <span>${request.comment.substring(0, 50)}${request.comment.length > 50 ? '...' : ''}</span>
               </div>
             ` : ''}
           </div>
@@ -2084,7 +2281,7 @@
       });
     }
 
-    // Show request detail modal
+    // Show request detail modal with enhanced photo display
     let detailMap;
     function showRequestDetail(request) {
       const modal = document.getElementById('requestModal');
@@ -2109,6 +2306,23 @@
         'refrigerator': translations[currentLang].refrigerator,
         'tow': translations[currentLang].tow
       };
+
+      // Create photo section for modal
+      let photoSection = '';
+      if (photoPath) {
+        photoSection = `
+          <div class="detail-section">
+            <div class="detail-label">${translations[currentLang].clientPhoto}</div>
+            <div class="modal-photo-container">
+              <img src="/files/${photoPath}" 
+                  alt="Client item photo" 
+                  class="modal-item-photo"
+                  onclick="showFullSizePhoto('/files/${photoPath}')"
+                  onerror="this.parentElement.parentElement.style.display='none'">
+            </div>
+          </div>
+        `;
+      }
       
       content.innerHTML = `
         <div id="detailMap"></div>
@@ -2125,7 +2339,7 @@
         
         <div class="detail-section">
           <div class="detail-label">${translations[currentLang].price}</div>
-          <div class="detail-value" style="font-size: 1.5rem; color: var(--accent-primary); font-weight: 700;">
+          <div class="detail-value" style="font-size: 1.8rem; color: var(--accent-primary); font-weight: 700;">
             ${price} ₸
           </div>
         </div>
@@ -2142,17 +2356,11 @@
           </div>
         ` : ''}
         
-        ${photoPath ? `
-          <div class="detail-section">
-            <div class="detail-label">${translations[currentLang].clientPhoto}</div>
-            <img src="/files/client-item-photo/${photoPath}" alt="Client photo" class="client-photo" 
-                 onerror="this.style.display='none'">
-          </div>
-        ` : ''}
+        ${photoSection}
         
         <div class="detail-section">
           <div class="detail-label">${translations[currentLang].contact}</div>
-          <div class="detail-value">${contact}</div>
+          <div class="detail-value" style="font-size: 1.2rem; font-weight: 600;">${contact}</div>
         </div>
         
         <div class="contact-buttons">
@@ -2235,6 +2443,37 @@
       }, 100);
     }
 
+    // Show full size photo in a separate modal
+    function showFullSizePhoto(photoUrl) {
+      // Create full-size photo modal
+      const fullSizeModal = document.createElement('div');
+      fullSizeModal.id = 'fullSizePhotoModal';
+      fullSizeModal.className = 'full-size-photo-modal';
+      fullSizeModal.innerHTML = `
+        <div class="full-size-photo-content">
+          <button class="full-size-close-btn" onclick="closeFullSizePhoto()">&times;</button>
+          <img src="${photoUrl}" alt="Full size photo" class="full-size-photo">
+        </div>
+      `;
+      
+      document.body.appendChild(fullSizeModal);
+      
+      // Close on click outside
+      fullSizeModal.addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeFullSizePhoto();
+        }
+      });
+    }
+
+    // Close full size photo modal
+    function closeFullSizePhoto() {
+      const modal = document.getElementById('fullSizePhotoModal');
+      if (modal) {
+        modal.remove();
+      }
+    }
+
     // Close modal
     function closeModal() {
       document.getElementById('requestModal').style.display = 'none';
@@ -2261,13 +2500,29 @@
       }
     });
 
-    // Make functions available globally
+    // Make functions available globally - ADD TO END OF SCRIPT
     window.selectOnMap = selectOnMap;
     window.closeModal = closeModal;
     window.setLang = setLang;
     window.toggleMapSize = toggleMapSize;
     window.requestLocationPermission = requestLocationPermission;
     window.skipLocationPermission = skipLocationPermission;
+    window.showFullSizePhoto = showFullSizePhoto;
+    window.closeFullSizePhoto = closeFullSizePhoto;
+
+    // Enhanced close modal function
+    function closeModal() {
+      document.getElementById('requestModal').style.display = 'none';
+      if (detailMap) {
+        detailMap.destroy();
+        detailMap = null;
+      }
+      // Also close any full-size photo modals
+      const fullSizeModal = document.getElementById('fullSizePhotoModal');
+      if (fullSizeModal) {
+        fullSizeModal.remove();
+      }
+    }
 
     // Initialize
     show(1);
