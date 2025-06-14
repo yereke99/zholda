@@ -348,8 +348,9 @@ class DriverLocationService {
                 coordinates[0]      // user longitude
             );
             
-            // Only recenter if user moved more than 100 meters from map center
-            if (distance > 0.1) { // 100 meters
+            // Recenter once the driver moves more than ~10 meters
+            // so the map follows the car more closely
+            if (distance > 0.01) { // 10 meters
                 if (window.driverMap.setLocation) {
                     window.driverMap.setLocation({
                         center: coordinates,
