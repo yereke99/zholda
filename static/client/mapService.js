@@ -562,12 +562,57 @@ async function updateRouteWithYandexAPI() {
             return;
         }
         
-        // Draw simple route line
-        drawSimpleRoute(fromCoords, toCoords);
-        
-        // Calculate distance
-        const distance = calculateStraightDistance(fromCoords, toCoords);
-        displayRouteDistance(distance.toFixed(1));
+        // Try building route via Yandex router
+        const {router, YMapFeature} = ymaps3;
+
+        if (routeLine && map) {
+            map.removeChild(routeLine);
+            routeLine = null;
+        }
+
+        const result = await router({
+            points: [fromCoords, toCoords],
+            type: 'driving'
+        });
+
+        if (result && result.routes && result.routes.length > 0) {
+            const geometry = result.routes[0].geometry;
+
+            routeLine = new YMapFeature({
+                geometry: {
+                    type: 'LineString',
+                    coordinates: geometry.coordinates
+                },
+                style: {
+                    stroke: [{
+                        color: '#10b981',
+                        width: 5,
+                        opacity: 0.8
+                    }],
+                    zIndex: 50
+                }
+            });
+
+            map.addChild(routeLine);
+
+            const routeDistance = calculateRouteDistance(geometry.coordinates);
+            displayRouteDistance(routeDistance.toFixed(1));
+
+            if (!isFullScreenMap && map.setLocation) {
+                const bounds = calculateBounds(geometry.coordinates);
+                setTimeout(() => {
+                    map.setLocation({
+                        bounds: bounds,
+                        duration: 1000
+                    });
+                }, 500);
+            }
+        } else {
+            // Fallback to straight line
+            drawSimpleRoute(fromCoords, toCoords);
+            const distance = calculateStraightDistance(fromCoords, toCoords);
+            displayRouteDistance(distance.toFixed(1));
+        }
         
     } catch (error) {
         console.error('❌ Route calculation error:', error);
@@ -666,6 +711,15 @@ function calculateStraightDistance(fromCoords, toCoords) {
               Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
+}
+
+// Calculate distance along a polyline of coordinates
+function calculateRouteDistance(coords) {
+    let total = 0;
+    for (let i = 1; i < coords.length; i++) {
+        total += calculateStraightDistance(coords[i - 1], coords[i]);
+    }
+    return total;
 }
 
 // Toggle map size
