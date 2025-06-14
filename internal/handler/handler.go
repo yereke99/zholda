@@ -1038,6 +1038,7 @@ func (h *Handler) StartWebServer(ctx context.Context, b *bot.Bot) {
 		http.ServeFile(w, r, "./static/debug-driver-profile.html")
 	})
 
+	http.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
 	http.HandleFunc("/client", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/client.html")
 	})
