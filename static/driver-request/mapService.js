@@ -999,28 +999,4 @@ window.closeFullScreenMap = closeFullScreenMap;
 window.setupDriverAddressSuggestions = setupDriverAddressSuggestions;
 window.clearDriverRoute = clearDriverRoute;
 
-// Auto-initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🗺️ COMPLETE Driver Map Service loaded, waiting for initialization...');
-    
-    // Wait for ymaps3 script to load
-    let attempts = 0;
-    const maxAttempts = 30; // Increased attempts
-    
-    const checkYmaps = () => {
-        attempts++;
-        if (window.ymaps3) {
-            console.log('✅ ymaps3 detected, initializing driver map with REAL coordinates...');
-            setTimeout(initializeDriverMap, 800);
-        } else if (attempts < maxAttempts) {
-            setTimeout(checkYmaps, 500);
-        } else {
-            console.error('❌ ymaps3 failed to load after maximum attempts');
-            showMapError('Не удалось загрузить Yandex Maps API');
-        }
-    };
-    
-    checkYmaps();
-});
-
-console.log('🗺️ COMPLETE FIXED Driver Map Service script loaded - supports REAL coordinates and interactive A/B pins');
+console.log('🗺️ Driver Map Service loaded - awaiting initialization from location service');
