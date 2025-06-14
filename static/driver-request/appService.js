@@ -730,5 +730,4 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-console.log('🚚 FIXED Driver App Service loaded with REAL GPS integration and enhanced location features');Property('--tg-viewport-height', `${vh}px`);
-            document.documentElement.style.set
+console.log('🚚 FIXED Driver App Service loaded with REAL GPS integration and enhanced location features');
