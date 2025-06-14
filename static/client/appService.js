@@ -200,11 +200,24 @@ class AppService {
             driverService.loadDrivers();
         }
 
-        // Setup address suggestions on step 2
+        // Setup map and suggestions when showing step 2
         if (step === 2) {
             setTimeout(() => {
                 setupAddressSuggestions('from_address');
                 setupAddressSuggestions('to_address');
+
+                // Initialize map after it becomes visible
+                if (typeof window.initializeMap === 'function') {
+                    if (!window.map) {
+                        window.initializeMap();
+                    } else if (window.map.container) {
+                        try {
+                            window.map.container.fitToViewport();
+                        } catch (err) {
+                            console.warn('Map resize warning:', err);
+                        }
+                    }
+                }
             }, 500);
         }
     }
