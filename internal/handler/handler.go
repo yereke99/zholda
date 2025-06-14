@@ -992,22 +992,33 @@ func (h *Handler) GetDriverSearchHandler(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(response)
 }
 
-// Add this to your StartWebServer function in handler.go
+// Fixed StartWebServer function with proper static file handling for all subdirectories
 func (h *Handler) StartWebServer(ctx context.Context, b *bot.Bot) {
+	// CRITICAL: Fix static file serving to handle all subdirectories
+	// This will correctly handle:
+	// /static/client/style.css
+	// /static/driver-request/style.css
+	// /static/driver-request/mapService.js
+	// etc.
+	staticFs := http.FileServer(http.Dir("./static"))
+	http.Handle("/static/", http.StripPrefix("/static/", staticFs))
+
+	// Alternative approach (more explicit):
+	// http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
+	//     http.ServeFile(w, r, "."+r.URL.Path)
+	// })
+
+	// File server for uploaded photos/files
+	http.HandleFunc("/files/", h.FileServerHandler)
+
 	// API routes
 	http.HandleFunc("/api/driver/check", h.CheckDriverHandler)
-
-	// ADD THIS LINE - this is what's missing!
 	http.HandleFunc("/api/driver/profile", h.GetDriverProfileHandler)
-
 	http.HandleFunc("/api/driver/update", h.UpdateDriverProfileHandler)
-
 	http.HandleFunc("/api/driver/register", func(w http.ResponseWriter, r *http.Request) {
 		h.RegisterDriverHandler(w, r, ctx, b)
 	})
-	// NEW: Add the intelligent search endpoint
 	http.HandleFunc("/api/driver/search", h.GetDriverSearchHandler)
-
 	http.HandleFunc("/api/driver/request", h.CreateDriverRequestHandler)
 	http.HandleFunc("/api/client/requests", h.GetClientRequestsHandler)
 	http.HandleFunc("/api/client/check", h.CheckClientHandler)
@@ -1016,10 +1027,7 @@ func (h *Handler) StartWebServer(ctx context.Context, b *bot.Bot) {
 	})
 	http.HandleFunc("/api/driver/matching", h.GetMatchingDriversHandler)
 
-	// File server for photos
-	http.HandleFunc("/files/", h.FileServerHandler)
-
-	// Serve static HTML files
+	// HTML page routes
 	http.HandleFunc("/driver-register", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/driver-register.html")
 	})
@@ -1028,26 +1036,23 @@ func (h *Handler) StartWebServer(ctx context.Context, b *bot.Bot) {
 		http.ServeFile(w, r, "./static/driver-request.html")
 	})
 
-	// ADD THIS LINE TOO
+	http.HandleFunc("/client", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/client.html")
+	})
+
 	http.HandleFunc("/driver-profile", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/driver-profile.html")
 	})
 
-	// ADD THIS DEBUG ROUTE
 	http.HandleFunc("/debug-driver-profile", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/debug-driver-profile.html")
-	})
-
-	http.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
-	http.HandleFunc("/client", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/client.html")
 	})
 
 	http.HandleFunc("/welcome", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/welcome.html")
 	})
 
-	// Root handler
+	// Root handler (LAST)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
