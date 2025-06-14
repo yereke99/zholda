@@ -1,9 +1,9 @@
-// Enhanced Real-time Location Service for Driver with 1-second updates
+// FIXED: Enhanced Real-time Location Service for Driver with 1-second GPS updates
 class DriverLocationService {
     constructor() {
         this.watchId = null;
         this.locationInterval = null;
-        this.currentUserLocation = null;
+        this.currentUserLocation = null; // Will be [longitude, latitude] for Yandex
         this.locationPermissionGranted = false;
         this.isTracking = false;
         this.lastAccuracy = Infinity;
@@ -15,7 +15,7 @@ class DriverLocationService {
                 locationError: 'Ошибка GPS',
                 locationPermission: 'Разрешение на геолокацию',
                 locationPermissionMessage: 'Для создания точной заявки нам нужен доступ к вашему местоположению. Это поможет клиентам найти вас быстрее.',
-                allow: 'Разрешить',
+                allow: 'Разрешить GPS',
                 skip: 'Пропустить',
                 locationDenied: 'GPS запрещен',
                 locationTimeout: 'GPS недоступен',
@@ -27,7 +27,7 @@ class DriverLocationService {
                 locationError: 'GPS қатесі',
                 locationPermission: 'Геолокацияға рұқсат',
                 locationPermissionMessage: 'Дәл өтінім жасау үшін бізге сіздің орналасқан жеріңізге қол жеткізу керек. Бұл клиенттерге сізді тезірек табуға көмектеседі.',
-                allow: 'Рұқсат беру',
+                allow: 'GPS рұқсат беру',
                 skip: 'Өткізіп жіберу',
                 locationDenied: 'GPS тыйым салынған',
                 locationTimeout: 'GPS қол жетімді емес',
@@ -46,16 +46,11 @@ class DriverLocationService {
         }
     }
 
-    // Request location permission with aggressive tracking
+    // FIXED: Request location permission with aggressive real-time tracking
     requestLocationPermission() {
-        console.log('🌍 Driver requesting high-accuracy location permission...');
+        console.log('🌍 Driver requesting HIGH-ACCURACY location permission...');
         
-        const dialog = document.getElementById('permissionDialog');
-        if (dialog) {
-            dialog.style.display = 'none';
-        }
-        
-        // Show searching status
+        this.hidePermissionDialog();
         this.updateLocationStatus('active', this.translations[window.currentLang || 'ru'].searching);
         
         if (!navigator.geolocation) {
@@ -65,78 +60,86 @@ class DriverLocationService {
             return;
         }
 
-        // Request maximum accuracy location
+        // CRITICAL: Request maximum accuracy location with aggressive settings
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                console.log('✅ Driver location permission granted:', position);
+                console.log('✅ Driver location permission GRANTED:', position.coords);
                 this.locationPermissionGranted = true;
+                
+                // FIXED: Store as [longitude, latitude] for Yandex Maps
                 this.currentUserLocation = [position.coords.longitude, position.coords.latitude];
                 this.lastAccuracy = position.coords.accuracy;
                 this.lastUpdateTime = Date.now();
                 
-                // Update global variable
+                // Update global variable for map initialization
                 window.currentUserLocation = this.currentUserLocation;
                 
                 this.updateLocationStatus('active', 
                     `${this.translations[window.currentLang || 'ru'].locationActive} ±${Math.round(position.coords.accuracy)}m`
                 );
                 
-                // Initialize map with real location
+                console.log('📍 Driver location set to:', this.currentUserLocation);
+                
+                // Initialize map with REAL location
                 this.initializeMapWithLocation();
                 
-                // Start aggressive real-time tracking
+                // Start AGGRESSIVE real-time tracking immediately
                 this.startAggressiveLocationTracking();
             },
             (error) => {
-                console.error('❌ Driver location permission error:', error);
+                console.error('❌ Driver location permission DENIED:', error);
                 this.handleLocationError(error);
                 this.initializeWithDefaultLocation();
             },
             {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
+                enableHighAccuracy: true,  // FORCE high accuracy
+                timeout: 15000,           // Give more time for initial fix
+                maximumAge: 0             // Always get fresh location
             }
         );
     }
 
-    // Skip location permission
-    skipLocationPermission() {
-        console.log('⏭️ Driver location permission skipped');
-        
+    // Hide permission dialog
+    hidePermissionDialog() {
         const dialog = document.getElementById('permissionDialog');
         if (dialog) {
             dialog.style.display = 'none';
         }
-        
+    }
+
+    // Skip location permission
+    skipLocationPermission() {
+        console.log('⏭️ Driver location permission skipped - using Almaty');
+        this.hidePermissionDialog();
         this.updateLocationStatus('error', this.translations[window.currentLang || 'ru'].locationError);
         this.initializeWithDefaultLocation();
     }
 
-    // Initialize with default Almaty location
+    // FIXED: Use Almaty coordinates as fallback (not static everywhere)
     initializeWithDefaultLocation() {
-        this.currentUserLocation = [76.889709, 43.238949]; // Almaty coordinates
+        // Almaty, Kazakhstan coordinates [longitude, latitude]
+        this.currentUserLocation = [76.889709, 43.238949];
         window.currentUserLocation = this.currentUserLocation;
-        console.log('📍 Driver using default location (Almaty):', this.currentUserLocation);
+        console.log('📍 Driver using DEFAULT Almaty location:', this.currentUserLocation);
         this.initializeMapWithLocation();
     }
 
-    // Handle location errors
+    // Handle location errors with better messaging
     handleLocationError(error) {
         let errorMessage = this.translations[window.currentLang || 'ru'].locationError;
         
         switch(error.code) {
             case error.PERMISSION_DENIED:
                 errorMessage = this.translations[window.currentLang || 'ru'].locationDenied;
-                console.log('📍 Driver location permission denied by user');
+                console.log('📍 Driver location permission DENIED by user');
                 break;
             case error.POSITION_UNAVAILABLE:
                 errorMessage = this.translations[window.currentLang || 'ru'].locationUnavailable;
-                console.log('📍 Driver location information unavailable');
+                console.log('📍 Driver location information UNAVAILABLE');
                 break;
             case error.TIMEOUT:
                 errorMessage = this.translations[window.currentLang || 'ru'].locationTimeout;
-                console.log('📍 Driver location request timeout');
+                console.log('📍 Driver location request TIMEOUT');
                 break;
             default:
                 console.log('📍 Unknown driver location error:', error.message);
@@ -148,21 +151,31 @@ class DriverLocationService {
 
     // Initialize map after getting location
     initializeMapWithLocation() {
-        // Set global location variable
+        // Ensure global location variable is set
         window.currentUserLocation = this.currentUserLocation;
         
+        // Wait for map initialization function to be available
         if (typeof window.initializeDriverMap === 'function') {
-            console.log('🗺️ Initializing driver map with location:', this.currentUserLocation);
+            console.log('🗺️ Initializing driver map with REAL location:', this.currentUserLocation);
             window.initializeDriverMap();
         } else {
-            console.warn('⚠️ initializeDriverMap function not found, retrying...');
-            setTimeout(() => {
+            console.warn('⚠️ initializeDriverMap not ready, retrying...');
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            const retry = () => {
+                attempts++;
                 if (typeof window.initializeDriverMap === 'function') {
+                    console.log('🗺️ Map function ready, initializing...');
                     window.initializeDriverMap();
+                } else if (attempts < maxAttempts) {
+                    setTimeout(retry, 500);
                 } else {
-                    console.error('❌ initializeDriverMap function still not available');
+                    console.error('❌ initializeDriverMap function not available after retries');
                 }
-            }, 1000);
+            };
+            
+            setTimeout(retry, 500);
         }
     }
 
@@ -179,16 +192,18 @@ class DriverLocationService {
         }
     }
 
-    // ENHANCED: Aggressive real-time location tracking every 1 second
+    // CRITICAL: Start AGGRESSIVE real-time location tracking every 1 second
     startAggressiveLocationTracking() {
         if (!navigator.geolocation || !this.locationPermissionGranted || this.isTracking) {
+            console.warn('⚠️ Cannot start tracking: geolocation=' + !!navigator.geolocation + 
+                        ' permission=' + this.locationPermissionGranted + ' isTracking=' + this.isTracking);
             return;
         }
 
-        console.log('🔄 Starting AGGRESSIVE driver location tracking (1-second updates)...');
+        console.log('🔄 Starting AGGRESSIVE driver GPS tracking (1-second intervals)...');
         this.isTracking = true;
 
-        // Method 1: watchPosition with high frequency
+        // Method 1: watchPosition with maximum accuracy
         this.watchId = navigator.geolocation.watchPosition(
             (position) => {
                 this.processLocationUpdate(position, 'watchPosition');
@@ -199,35 +214,39 @@ class DriverLocationService {
             },
             {
                 enableHighAccuracy: true,
-                timeout: 2000,      // 2 seconds timeout
-                maximumAge: 0       // Always get fresh location
+                timeout: 3000,        // 3 seconds timeout
+                maximumAge: 0         // Always get fresh location
             }
         );
 
-        // Method 2: Aggressive interval polling every 1 second
+        // Method 2: AGGRESSIVE interval polling every 1 second
         this.locationInterval = setInterval(() => {
-            if (!this.locationPermissionGranted) return;
+            if (!this.locationPermissionGranted) {
+                console.warn('⚠️ Permission lost, stopping interval');
+                return;
+            }
             
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     this.processLocationUpdate(position, 'interval');
                 },
                 (error) => {
-                    console.warn('⚠️ Driver interval location update failed:', error.message);
+                    console.warn('⚠️ Driver interval GPS failed:', error.message);
                 },
                 {
                     enableHighAccuracy: true,
-                    timeout: 1500,      // 1.5 seconds timeout for fast response
-                    maximumAge: 500     // Accept location up to 0.5 seconds old
+                    timeout: 2000,      // 2 seconds timeout for fast response
+                    maximumAge: 1000    // Accept location up to 1 second old
                 }
             );
         }, 1000); // Every 1 second!
 
-        console.log('✅ Aggressive driver GPS tracking started with 1-second intervals');
+        console.log('✅ AGGRESSIVE driver GPS tracking started - updates every 1 second');
     }
 
-    // Process location update from any source
+    // FIXED: Process location update with proper coordinate handling
     processLocationUpdate(position, source) {
+        // CRITICAL: Always store as [longitude, latitude] for Yandex Maps
         const newCoords = [position.coords.longitude, position.coords.latitude];
         const accuracy = position.coords.accuracy;
         const currentTime = Date.now();
@@ -235,61 +254,59 @@ class DriverLocationService {
         
         this.updateCounter++;
         
-        console.log(`📍 Driver GPS Update #${this.updateCounter} [${source}]: ${newCoords[1].toFixed(6)}, ${newCoords[0].toFixed(6)} (±${Math.round(accuracy)}m) [${timeSinceLastUpdate}ms ago]`);
+        console.log(`📍 Driver GPS #${this.updateCounter} [${source}]: LAT=${newCoords[1].toFixed(6)}, LON=${newCoords[0].toFixed(6)} (±${Math.round(accuracy)}m) [${timeSinceLastUpdate}ms ago]`);
         
         // Calculate distance moved
         let distanceMoved = 0;
         if (this.currentUserLocation) {
             distanceMoved = this.calculateDistance(
-                this.currentUserLocation[1], this.currentUserLocation[0],
-                newCoords[1], newCoords[0]
-            ) * 1000; // in meters
+                this.currentUserLocation[1], this.currentUserLocation[0], // old lat, old lon
+                newCoords[1], newCoords[0]                                // new lat, new lon
+            ) * 1000; // convert to meters
         }
 
-        // Update conditions - more aggressive:
-        // 1. Better accuracy (even small improvements)
-        // 2. User moved more than 1 meter
-        // 3. More than 2 seconds since last update
-        // 4. First location update
+        // AGGRESSIVE update conditions:
         const shouldUpdate = 
-            !this.currentUserLocation || 
-            accuracy < this.lastAccuracy || 
-            distanceMoved > 1 || 
-            timeSinceLastUpdate > 2000;
+            !this.currentUserLocation ||          // First location
+            accuracy < this.lastAccuracy ||       // Better accuracy
+            distanceMoved > 0.5 ||                // Moved more than 0.5 meter
+            timeSinceLastUpdate > 3000;           // More than 3 seconds since last update
 
         if (shouldUpdate) {
             const oldLocation = this.currentUserLocation ? [...this.currentUserLocation] : null;
             
+            // Update location data
             this.currentUserLocation = newCoords;
             this.lastAccuracy = accuracy;
             this.lastUpdateTime = currentTime;
             window.currentUserLocation = newCoords;
             
-            // Update map marker
+            // Update map marker with new position
             this.updateMapUserLocation(newCoords);
             
             // Update status with real-time info
             const speed = position.coords.speed ? ` ${Math.round(position.coords.speed * 3.6)}км/ч` : '';
+            const heading = position.coords.heading ? ` ${Math.round(position.coords.heading)}°` : '';
             this.updateLocationStatus('active', 
-                `GPS ±${Math.round(accuracy)}m${speed} #${this.updateCounter}`
+                `GPS ±${Math.round(accuracy)}m${speed}${heading} #${this.updateCounter}`
             );
             
-            // Log movement
+            // Log movement details
             if (oldLocation && distanceMoved > 0) {
-                console.log(`🚶 Driver moved ${distanceMoved.toFixed(1)}m (accuracy improved by ${(this.lastAccuracy - accuracy).toFixed(1)}m)`);
+                console.log(`🚶 Driver moved ${distanceMoved.toFixed(1)}m (accuracy: ${accuracy.toFixed(1)}m)`);
             }
         } else {
-            console.log(`⏹️ Skipping driver update: dist=${distanceMoved.toFixed(1)}m, acc=${accuracy}m vs ${this.lastAccuracy}m, time=${timeSinceLastUpdate}ms`);
+            console.log(`⏹️ Skipping driver update: moved=${distanceMoved.toFixed(1)}m, accuracy=${accuracy}m vs ${this.lastAccuracy}m, time=${timeSinceLastUpdate}ms`);
         }
     }
 
-    // Update map user location marker with enhanced feedback
+    // FIXED: Update map user location marker
     updateMapUserLocation(coordinates) {
         try {
-            // Update global variable
+            // Always keep global variable updated
             window.currentUserLocation = coordinates;
             
-            // Update user location marker on map
+            // Try to update map marker via function
             if (typeof window.updateDriverLocationMarker === 'function') {
                 window.updateDriverLocationMarker(coordinates);
                 console.log('📍 Driver map marker updated via function');
@@ -298,10 +315,14 @@ class DriverLocationService {
                 if (window.userLocationMarker.update) {
                     window.userLocationMarker.update({ coordinates: coordinates });
                     console.log('📍 Driver map marker updated directly');
+                } else {
+                    console.warn('⚠️ Cannot update marker - no update method');
                 }
+            } else {
+                console.warn('⚠️ Map marker or map not available for update');
             }
             
-            // Smart auto-centering - only if user moved significantly
+            // Smart auto-centering only when necessary
             this.smartAutoRecenter(coordinates);
             
         } catch (error) {
@@ -309,35 +330,37 @@ class DriverLocationService {
         }
     }
 
-    // Smart auto-recenter - only when necessary
+    // Smart auto-recenter map when user moves significantly
     smartAutoRecenter(coordinates) {
         try {
-            if (!window.driverMap || !window.driverMap.getLocation) return;
+            if (!window.driverMap || !window.driverMap.getLocation || window.selectingPoint) {
+                return; // Don't recenter during address selection
+            }
             
             const currentLocation = window.driverMap.getLocation();
             if (!currentLocation || !currentLocation.center) return;
             
             const mapCenter = currentLocation.center;
             const distance = this.calculateDistance(
-                mapCenter[1] || 0, 
-                mapCenter[0] || 0,
-                coordinates[1], 
-                coordinates[0]
+                mapCenter[1] || 0,  // map center latitude
+                mapCenter[0] || 0,  // map center longitude
+                coordinates[1],     // user latitude
+                coordinates[0]      // user longitude
             );
             
-            // Only recenter if user moved more than 50 meters from map center
-            // and we're not in selection mode
-            if (distance > 0.05 && !window.selectingPoint) { // 50 meters
+            // Only recenter if user moved more than 100 meters from map center
+            if (distance > 0.1) { // 100 meters
                 if (window.driverMap.setLocation) {
                     window.driverMap.setLocation({
                         center: coordinates,
-                        duration: 1000
+                        zoom: window.driverMap.getLocation().zoom || 14,
+                        duration: 1500
                     });
                     console.log(`🎯 Driver map recentered - user moved ${(distance * 1000).toFixed(0)}m from center`);
                 }
             }
         } catch (error) {
-            console.warn('⚠️ Driver auto-recenter warning:', error.message);
+            console.warn('⚠️ Driver auto-recenter error:', error.message);
         }
     }
 
@@ -350,7 +373,7 @@ class DriverLocationService {
                   Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
                   Math.sin(dLon/2) * Math.sin(dLon/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
+        return R * c; // Distance in kilometers
     }
 
     // Get current user location
@@ -363,7 +386,7 @@ class DriverLocationService {
         return this.locationPermissionGranted;
     }
 
-    // Set current location manually
+    // Set current location manually (for testing)
     setCurrentLocation(coords) {
         console.log('🎯 Manually setting driver location:', coords);
         this.currentUserLocation = coords;
@@ -386,17 +409,6 @@ class DriverLocationService {
         }
         
         this.updateLocationStatus('error', 'GPS остановлен');
-    }
-
-    // Restart location tracking
-    restartTracking() {
-        console.log('🔄 Restarting driver location tracking...');
-        this.stopTracking();
-        if (this.locationPermissionGranted) {
-            setTimeout(() => {
-                this.startAggressiveLocationTracking();
-            }, 1000);
-        }
     }
 
     // Force immediate high-accuracy location update
@@ -428,28 +440,15 @@ class DriverLocationService {
             }
 
             navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    resolve(position);
-                },
+                (position) => resolve(position),
                 (error) => reject(error),
                 {
                     enableHighAccuracy: highAccuracy,
-                    timeout: highAccuracy ? 5000 : 3000,
+                    timeout: highAccuracy ? 8000 : 5000,
                     maximumAge: 0
                 }
             );
         });
-    }
-
-    // Cleanup location tracking
-    cleanup() {
-        console.log('🧹 Cleaning up driver location service...');
-        this.stopTracking();
-        this.locationPermissionGranted = false;
-        this.currentUserLocation = null;
-        this.lastAccuracy = Infinity;
-        this.updateCounter = 0;
-        window.currentUserLocation = null;
     }
 
     // Get tracking status for debugging
@@ -462,45 +461,20 @@ class DriverLocationService {
             updateCounter: this.updateCounter,
             watchId: this.watchId,
             intervalId: this.locationInterval,
-            lastUpdateTime: this.lastUpdateTime
+            lastUpdateTime: this.lastUpdateTime,
+            timeSinceLastUpdate: Date.now() - this.lastUpdateTime
         };
     }
 
-    // Auto-start GPS when page becomes visible
-    handleVisibilityChange() {
-        if (document.visibilityState === 'visible' && this.locationPermissionGranted && !this.isTracking) {
-            console.log('📱 Driver page visible - restarting GPS tracking');
-            this.restartTracking();
-        } else if (document.visibilityState === 'hidden' && this.isTracking) {
-            console.log('📱 Driver page hidden - pausing GPS tracking');
-            this.stopTracking();
-        }
-    }
-
-    // Battery-aware tracking (reduce frequency on low battery)
-    async adjustTrackingForBattery() {
-        if ('getBattery' in navigator) {
-            try {
-                const battery = await navigator.getBattery();
-                if (battery.level < 0.2) { // Less than 20% battery
-                    console.log('🔋 Low battery detected - reducing driver GPS frequency');
-                    // Could implement less aggressive tracking here
-                }
-            } catch (error) {
-                console.warn('⚠️ Battery API not available');
-            }
-        }
-    }
-
-    // Debug location history
-    getLocationHistory() {
-        return {
-            currentLocation: this.currentUserLocation,
-            accuracy: this.lastAccuracy,
-            updateCount: this.updateCounter,
-            trackingDuration: this.isTracking ? Date.now() - this.lastUpdateTime : 0,
-            isActive: this.isTracking
-        };
+    // Cleanup when page unloads
+    cleanup() {
+        console.log('🧹 Cleaning up driver location service...');
+        this.stopTracking();
+        this.locationPermissionGranted = false;
+        this.currentUserLocation = null;
+        this.lastAccuracy = Infinity;
+        this.updateCounter = 0;
+        window.currentUserLocation = null;
     }
 }
 
@@ -515,29 +489,27 @@ window.driverLocationService = driverLocationService;
 // Export debugging functions
 window.getDriverLocationStatus = () => driverLocationService.getTrackingStatus();
 window.forceDriverLocationUpdate = () => driverLocationService.forceLocationUpdate();
-window.getDriverAccuracyInfo = () => driverLocationService.getAccuracyInfo();
-window.startDriverGPSTracking = () => driverLocationService.setAggressiveMode(true);
-window.stopDriverGPSTracking = () => driverLocationService.setAggressiveMode(false);
 
-// Auto-handle page visibility changes
+// Handle page visibility changes
 document.addEventListener('visibilitychange', () => {
-    driverLocationService.handleVisibilityChange();
+    if (document.visibilityState === 'visible' && driverLocationService.locationPermissionGranted && !driverLocationService.isTracking) {
+        console.log('📱 Driver page visible - restarting GPS tracking');
+        driverLocationService.startAggressiveLocationTracking();
+    } else if (document.visibilityState === 'hidden' && driverLocationService.isTracking) {
+        console.log('📱 Driver page hidden - pausing GPS tracking');
+        driverLocationService.stopTracking();
+    }
 });
 
-// Auto-check battery status periodically
-setInterval(() => {
-    driverLocationService.adjustTrackingForBattery();
-}, 60000); // Every minute
-
-// Clean up location tracking on page unload
+// Clean up on page unload
 window.addEventListener('beforeunload', () => {
     driverLocationService.cleanup();
 });
 
-// Auto-initialize when DOM is ready
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('📍 Enhanced Real-time Driver Location Service loaded and ready');
+    console.log('📍 Enhanced Driver Location Service loaded and ready');
     console.log('🚀 Driver GPS will update every 1 second when permission granted');
 });
 
-console.log('📍 Enhanced Driver Location Service script loaded with 1-second GPS updates');
+console.log('📍 FIXED Driver Location Service script loaded');

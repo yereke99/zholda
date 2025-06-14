@@ -1000,8 +1000,7 @@ func (h *Handler) StartWebServer(ctx context.Context, b *bot.Bot) {
 	// /static/driver-request/style.css
 	// /static/driver-request/mapService.js
 	// etc.
-	staticFs := http.FileServer(http.Dir("./static"))
-	http.Handle("/static/", http.StripPrefix("/static/", staticFs))
+	http.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir("./static"))))
 
 	// Alternative approach (more explicit):
 	// http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {

@@ -1,43 +1,71 @@
-// Enhanced Map Service for Driver with Yandex Maps API v3 and real-time GPS
+// COMPLETE FIXED: Enhanced Map Service for Driver with Working Yandex Maps v3
 let driverMap;
 let fromMarker, toMarker, userLocationMarker;
 let routeLine;
 let selectingPoint = null;
 let currentUserLocation = null;
 let isFullScreenMap = false;
+let mapInitialized = false;
 
-// Initialize driver map with user location
+// FIXED: Initialize driver map with proper error handling and REAL coordinates
 async function initializeDriverMap() {
     try {
-        console.log('🗺️ Initializing Driver Yandex Maps 3.0...');
-        await ymaps3.ready;
+        console.log('🗺️ Starting Driver Yandex Maps v3 initialization...');
         
+        // Check if ymaps3 is available
+        if (!window.ymaps3) {
+            console.error('❌ ymaps3 not loaded! Check API key.');
+            showMapError('Yandex Maps API не загружен');
+            return;
+        }
+
+        // Wait for ymaps3 to be ready
+        console.log('⏳ Waiting for ymaps3.ready...');
+        await ymaps3.ready;
+        console.log('✅ ymaps3.ready completed');
+        
+        // Get required modules
         const {YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapMarker, YMapListener} = ymaps3;
         
-        // Get current location from location service (lon, lat format for Yandex)
-        currentUserLocation = window.currentUserLocation || driverLocationService?.getCurrentLocation() || [76.889709, 43.238949];
-        console.log('📍 Driver using location for map:', currentUserLocation);
+        if (!YMap || !YMapDefaultSchemeLayer) {
+            throw new Error('Required ymaps3 modules not available');
+        }
+
+        // FIXED: Get current location from location service (not static!)
+        currentUserLocation = window.currentUserLocation || 
+                             (window.driverLocationService?.getCurrentLocation()) || 
+                             [76.889709, 43.238949]; // Fallback to Almaty
         
-        // Initialize map with proper center
-        driverMap = new YMap(
-            document.getElementById('driverRequestMap'),
-            {
-                location: {
-                    center: currentUserLocation, // [longitude, latitude]
-                    zoom: 14
-                },
-                theme: 'light'
-            }
-        );
+        console.log('📍 Driver map using REAL location:', currentUserLocation);
+        
+        // Get map container
+        const mapContainer = document.getElementById('driverRequestMap');
+        if (!mapContainer) {
+            throw new Error('Map container #driverRequestMap not found');
+        }
+
+        // CRITICAL: Initialize map with REAL user coordinates
+        console.log('🗺️ Creating YMap instance with real coordinates...');
+        driverMap = new YMap(mapContainer, {
+            location: {
+                center: currentUserLocation, // [longitude, latitude] - REAL coordinates
+                zoom: 15 // Closer zoom for better detail
+            },
+            theme: 'light',
+            behaviors: ['default']
+        });
 
         // Add map layers
-        driverMap.addChild(new YMapDefaultSchemeLayer({ theme: 'light' }));
+        console.log('🗺️ Adding map layers...');
+        driverMap.addChild(new YMapDefaultSchemeLayer());
         driverMap.addChild(new YMapDefaultFeaturesLayer());
 
-        // Add user location marker with FIXED positioning
+        // CRITICAL: Add user location marker at REAL position
+        console.log('📍 Adding user location marker at real position...');
         addDriverLocationMarker(currentUserLocation);
 
         // Add click listener for address selection
+        console.log('🖱️ Adding map click listener...');
         const mapListener = new YMapListener({
             layer: 'any',
             onClick: handleDriverMapClick
@@ -48,99 +76,166 @@ async function initializeDriverMap() {
         window.driverMap = driverMap;
         window.userLocationMarker = userLocationMarker;
 
-        console.log('✅ Driver Yandex Maps 3.0 initialized successfully');
+        mapInitialized = true;
+        console.log('✅ Driver Yandex Maps v3 initialized successfully with REAL location!');
+        
+        // Update location status
+        if (window.driverLocationService) {
+            driverLocationService.updateLocationStatus('active', 'Карта загружена');
+        }
         
     } catch (error) {
-        console.error('❌ Error initializing Driver Yandex Maps 3.0:', error);
+        console.error('❌ Error initializing Driver Yandex Maps v3:', error);
+        showMapError('Ошибка загрузки карты: ' + error.message);
+        
         if (window.driverLocationService) {
-            driverLocationService.updateLocationStatus('error', 'Ошибка загрузки карты');
+            driverLocationService.updateLocationStatus('error', 'Ошибка карты');
         }
     }
 }
 
-// FIXED: Add driver location marker with CORRECT positioning and animation
+// Show map error with retry functionality
+function showMapError(message) {
+    const mapContainer = document.getElementById('driverRequestMap');
+    if (mapContainer) {
+        mapContainer.innerHTML = `
+            <div style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                background: var(--input-bg);
+                color: var(--text-secondary);
+                text-align: center;
+                padding: 20px;
+                border-radius: 12px;
+            ">
+                <div style="font-size: 2rem; margin-bottom: 10px;">🗺️</div>
+                <div style="margin-bottom: 15px; font-weight: 600;">${message}</div>
+                <button onclick="retryMapInitialization()" style="
+                    background: var(--accent-gradient);
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-weight: 600;
+                ">Повторить</button>
+            </div>
+        `;
+    }
+}
+
+// Retry map initialization
+window.retryMapInitialization = function() {
+    console.log('🔄 Retrying driver map initialization...');
+    mapInitialized = false;
+    setTimeout(() => {
+        initializeDriverMap();
+    }, 1000);
+};
+
+// FIXED: Add driver location marker with REAL coordinates and animation
 function addDriverLocationMarker(coordinates) {
     try {
-        console.log('👤 Creating driver location marker at:', coordinates);
+        console.log('👤 Creating driver location marker at REAL position:', coordinates);
         
-        if (!userLocationMarker) {
-            const {YMapMarker} = ymaps3;
-            
-            // Create user location element with pulsing animation
-            const userLocationElement = document.createElement('div');
-            userLocationElement.className = 'user-location-marker-container';
-            userLocationElement.style.cssText = `
-                width: 20px;
-                height: 20px;
-                position: relative;
-                z-index: 1000;
-            `;
-            
-            userLocationElement.innerHTML = `
-                <div class="user-location-dot" style="
-                    width: 16px; 
-                    height: 16px; 
-                    background: #3b82f6; 
-                    border: 3px solid white; 
-                    border-radius: 50%; 
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-                    position: absolute;
-                    top: 2px;
-                    left: 2px;
-                    z-index: 2;
-                "></div>
-                <div class="user-location-pulse" style="
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 20px;
-                    height: 20px;
-                    background: rgba(59, 130, 246, 0.3);
-                    border-radius: 50%;
-                    animation: userLocationPulse 2s infinite;
-                    z-index: 1;
-                "></div>
-                <style>
-                    @keyframes userLocationPulse {
-                        0% { transform: scale(1); opacity: 1; }
-                        100% { transform: scale(3); opacity: 0; }
-                    }
-                </style>
-            `;
-
-            userLocationMarker = new YMapMarker(
-                {
-                    coordinates: coordinates, // [longitude, latitude]
-                    draggable: false
-                },
-                userLocationElement
-            );
-
-            if (driverMap) {
-                driverMap.addChild(userLocationMarker);
-                console.log('✅ Driver location marker added to map');
-            }
-            
-            window.userLocationMarker = userLocationMarker;
+        if (!driverMap || !window.ymaps3) {
+            console.warn('⚠️ Map or ymaps3 not ready for marker creation');
+            return;
         }
+        
+        const {YMapMarker} = ymaps3;
+        
+        // Remove existing marker if present
+        if (userLocationMarker) {
+            try {
+                driverMap.removeChild(userLocationMarker);
+            } catch (e) {
+                console.warn('Warning removing old marker:', e);
+            }
+            userLocationMarker = null;
+        }
+        
+        // Create enhanced user location element with pulsing animation
+        const userLocationElement = document.createElement('div');
+        userLocationElement.className = 'user-location-marker-container';
+        userLocationElement.style.cssText = `
+            position: relative;
+            width: 24px;
+            height: 24px;
+            z-index: 1000;
+        `;
+        
+        userLocationElement.innerHTML = `
+            <div class="user-location-dot" style="
+                position: absolute;
+                top: 3px;
+                left: 3px;
+                width: 18px;
+                height: 18px;
+                background: #3b82f6;
+                border: 3px solid white;
+                border-radius: 50%;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+                z-index: 2;
+                transition: all 0.3s ease;
+            "></div>
+            <div class="user-location-pulse" style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 24px;
+                height: 24px;
+                background: rgba(59, 130, 246, 0.3);
+                border-radius: 50%;
+                animation: userLocationPulse 2s infinite;
+                z-index: 1;
+            "></div>
+            <style>
+                @keyframes userLocationPulse {
+                    0% { transform: scale(1); opacity: 1; }
+                    100% { transform: scale(3); opacity: 0; }
+                }
+            </style>
+        `;
+
+        // CRITICAL: Create marker at REAL coordinates
+        userLocationMarker = new YMapMarker(
+            {
+                coordinates: coordinates, // [longitude, latitude] - REAL position
+                draggable: false
+            },
+            userLocationElement
+        );
+
+        driverMap.addChild(userLocationMarker);
+        window.userLocationMarker = userLocationMarker;
+        console.log('✅ Driver location marker added at REAL position');
         
     } catch (error) {
         console.error('❌ Error adding driver location marker:', error);
     }
 }
 
-// FIXED: Update driver location marker position with smooth animation
+// FIXED: Update driver location marker with REAL coordinates
 function updateDriverLocationMarker(coordinates) {
     try {
-        console.log('📍 Updating driver marker to:', coordinates);
+        console.log('📍 Updating driver marker to REAL position:', coordinates);
         
-        if (userLocationMarker && driverMap) {
-            // Update marker position smoothly
+        if (!mapInitialized || !driverMap) {
+            console.warn('⚠️ Map not initialized, cannot update marker');
+            return;
+        }
+        
+        if (userLocationMarker) {
+            // Update marker position with REAL coordinates
             userLocationMarker.update({
-                coordinates: coordinates // [longitude, latitude]
+                coordinates: coordinates // [longitude, latitude] - REAL position
             });
             
-            // Add visual feedback for movement
+            // Visual feedback for movement
             const markerElement = userLocationMarker.element;
             if (markerElement) {
                 const dot = markerElement.querySelector('.user-location-dot');
@@ -153,13 +248,13 @@ function updateDriverLocationMarker(coordinates) {
                 }
             }
             
-            console.log('✅ Driver marker position updated');
-        } else if (!userLocationMarker) {
+            console.log('✅ Driver marker position updated to REAL coordinates');
+        } else {
             // Create marker if it doesn't exist
             addDriverLocationMarker(coordinates);
         }
         
-        // Update global variable
+        // Update global variable with REAL coordinates
         currentUserLocation = coordinates;
         window.currentUserLocation = coordinates;
         
@@ -167,10 +262,6 @@ function updateDriverLocationMarker(coordinates) {
         console.error('❌ Error updating driver location marker:', error);
         // Try to recreate the marker if update fails
         try {
-            if (userLocationMarker && driverMap) {
-                driverMap.removeChild(userLocationMarker);
-            }
-            userLocationMarker = null;
             addDriverLocationMarker(coordinates);
         } catch (recreateError) {
             console.error('❌ Error recreating driver marker:', recreateError);
@@ -178,23 +269,23 @@ function updateDriverLocationMarker(coordinates) {
     }
 }
 
-// Enhanced driver map click handler with CORRECT coordinate handling
+// FIXED: Enhanced driver map click handler for A/B pin placement
 async function handleDriverMapClick(object, event) {
-    console.log('🖱️ Driver map clicked:', event);
+    console.log('🖱️ Driver map clicked for address selection:', event);
     
     if (!selectingPoint || !event.coordinates) {
-        console.log('⚠️ Not selecting point or no coordinates');
+        console.log('⚠️ Not selecting point or no coordinates available');
         return;
     }
 
     const coords = event.coordinates; // [longitude, latitude]
-    console.log(`📌 Setting driver ${selectingPoint.toUpperCase()} point at:`, coords);
+    console.log(`📌 Setting driver ${selectingPoint.toUpperCase()} point at REAL coordinates:`, coords);
     
-    // Set point with correct coordinates
-    setDriverPoint(selectingPoint, coords);
-    
-    // Get address from Yandex Geocoding API
     try {
+        // Set point with REAL coordinates
+        setDriverPoint(selectingPoint, coords);
+        
+        // Get address from Yandex Geocoding API
         const address = await getAddressFromCoordinates(coords);
         console.log(`✅ Address retrieved for driver ${selectingPoint}: ${address}`);
         
@@ -205,10 +296,9 @@ async function handleDriverMapClick(object, event) {
         if (inputElement && address) {
             inputElement.value = address;
             inputElement.dispatchEvent(new Event('input'));
-            console.log(`📝 Filled driver ${inputId} with: ${address}`);
         }
         
-        // Update coordinate fields with CORRECT lat/lon
+        // CRITICAL: Update coordinate fields with REAL coordinates
         if (selectingPoint === 'from') {
             document.getElementById('from_lat').value = coords[1]; // latitude
             document.getElementById('from_lon').value = coords[0]; // longitude
@@ -234,62 +324,64 @@ async function handleDriverMapClick(object, event) {
         updateMapPickerButtons();
         
     } catch (error) {
-        console.error('❌ Error getting driver address:', error);
-        // Fallback to coordinates if address fails
-        const fallbackAddress = `${coords[1].toFixed(6)}, ${coords[0].toFixed(6)}`;
-        const inputId = selectingPoint === 'from' ? 'from_address' : 'to_address';
-        const inputElement = document.getElementById(inputId);
-        if (inputElement) {
-            inputElement.value = fallbackAddress;
-        }
+        console.error('❌ Error handling driver map click:', error);
     }
 }
 
-// FIXED: Set driver point with CORRECT marker positioning (A and B markers)
+// FIXED: Set driver point with CORRECT A/B marker positioning
 function setDriverPoint(type, coordinates) {
     try {
-        console.log(`🎯 Creating driver ${type.toUpperCase()} marker at:`, coordinates);
+        if (!mapInitialized || !driverMap || !window.ymaps3) {
+            console.warn('⚠️ Map not ready for point setting');
+            return;
+        }
+        
+        console.log(`🎯 Creating driver ${type.toUpperCase()} marker at REAL coordinates:`, coordinates);
         const {YMapMarker} = ymaps3;
         
         if (type === 'from') {
             // Remove existing FROM marker
-            if (fromMarker && driverMap) {
-                driverMap.removeChild(fromMarker);
+            if (fromMarker) {
+                try {
+                    driverMap.removeChild(fromMarker);
+                } catch (e) {
+                    console.warn('Warning removing from marker:', e);
+                }
                 fromMarker = null;
             }
             
-            // Create FROM marker container
+            // Create FROM marker container with A pin
             const fromContainer = document.createElement('div');
             fromContainer.className = 'from-marker-container';
             fromContainer.style.cssText = `
                 position: relative;
-                width: 30px;
-                height: 30px;
+                width: 32px;
+                height: 32px;
                 z-index: 200;
             `;
             
-            // Create FROM marker (green A)
             fromContainer.innerHTML = `
                 <div class="from-marker" style="
                     background: linear-gradient(135deg, #10b981, #059669);
                     color: white;
-                    width: 30px;
-                    height: 30px;
+                    width: 32px;
+                    height: 32px;
                     border-radius: 50%;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     font-weight: bold;
-                    font-size: 16px;
+                    font-size: 18px;
                     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
                     border: 3px solid white;
-                    animation: markerBounceIn 0.6s ease-out;
+                    animation: markerBounce 0.6s ease-out;
                     position: absolute;
                     top: 0;
                     left: 0;
+                    cursor: grab;
                 ">А</div>
                 <style>
-                    @keyframes markerBounceIn {
+                    @keyframes markerBounce {
                         0% { transform: scale(0) translateY(-20px); opacity: 0; }
                         50% { transform: scale(1.2) translateY(-10px); opacity: 1; }
                         100% { transform: scale(1) translateY(0); opacity: 1; }
@@ -299,69 +391,71 @@ function setDriverPoint(type, coordinates) {
             
             fromMarker = new YMapMarker(
                 {
-                    coordinates: coordinates, // [longitude, latitude]
+                    coordinates: coordinates, // [longitude, latitude] - REAL coordinates
                     draggable: true
                 },
                 fromContainer
             );
             
             driverMap.addChild(fromMarker);
-            console.log('✅ Driver FROM marker (А) created');
+            window.fromMarker = fromMarker;
+            console.log('✅ Driver FROM marker (А) created at REAL coordinates');
             
         } else if (type === 'to') {
             // Remove existing TO marker
-            if (toMarker && driverMap) {
-                driverMap.removeChild(toMarker);
+            if (toMarker) {
+                try {
+                    driverMap.removeChild(toMarker);
+                } catch (e) {
+                    console.warn('Warning removing to marker:', e);
+                }
                 toMarker = null;
             }
             
-            // Create TO marker container
+            // Create TO marker container with B pin
             const toContainer = document.createElement('div');
             toContainer.className = 'to-marker-container';
             toContainer.style.cssText = `
                 position: relative;
-                width: 30px;
-                height: 30px;
+                width: 32px;
+                height: 32px;
                 z-index: 200;
             `;
             
-            // Create TO marker (blue B)
             toContainer.innerHTML = `
                 <div class="to-marker" style="
                     background: linear-gradient(135deg, #3b82f6, #1e40af);
                     color: white;
-                    width: 30px;
-                    height: 30px;
+                    width: 32px;
+                    height: 32px;
                     border-radius: 50%;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     font-weight: bold;
-                    font-size: 16px;
+                    font-size: 18px;
                     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
                     border: 3px solid white;
-                    animation: markerBounceIn 0.6s ease-out;
+                    animation: markerBounce 0.6s ease-out;
                     position: absolute;
                     top: 0;
                     left: 0;
+                    cursor: grab;
                 ">Б</div>
             `;
             
             toMarker = new YMapMarker(
                 {
-                    coordinates: coordinates, // [longitude, latitude]
+                    coordinates: coordinates, // [longitude, latitude] - REAL coordinates
                     draggable: true
                 },
                 toContainer
             );
             
             driverMap.addChild(toMarker);
-            console.log('✅ Driver TO marker (Б) created');
+            window.toMarker = toMarker;
+            console.log('✅ Driver TO marker (Б) created at REAL coordinates');
         }
-        
-        // Make markers globally available
-        window.fromMarker = fromMarker;
-        window.toMarker = toMarker;
         
     } catch (error) {
         console.error('❌ Error setting driver point:', error);
@@ -371,7 +465,6 @@ function setDriverPoint(type, coordinates) {
 // Get address from coordinates using Yandex Geocoding API
 async function getAddressFromCoordinates(coordinates) {
     try {
-        // Yandex Geocoding API expects longitude,latitude format
         const response = await fetch(
             `https://geocode-maps.yandex.ru/1.x/?apikey=8a3e4da0-9ef2-4176-9203-e7014c1dba6f&geocode=${coordinates[0]},${coordinates[1]}&format=json&results=1&lang=ru_RU`
         );
@@ -399,7 +492,7 @@ async function getAddressFromCoordinates(coordinates) {
     }
 }
 
-// Open full-screen map for address selection
+// FIXED: Open full-screen map for address selection
 function openFullScreenMap(type) {
     console.log(`🖱️ Opening full-screen driver map for ${type.toUpperCase()} selection`);
     selectingPoint = type;
@@ -443,7 +536,7 @@ function openFullScreenMap(type) {
             try {
                 driverMap.container.fitToViewport();
             } catch (error) {
-                console.warn('Driver map resize warning:', error);
+                console.warn('Map resize warning:', error);
             }
         }
     }, 300);
@@ -452,7 +545,7 @@ function openFullScreenMap(type) {
     if (currentUserLocation && driverMap) {
         driverMap.setLocation({
             center: currentUserLocation,
-            zoom: 14,
+            zoom: 15,
             duration: 500
         });
     }
@@ -500,15 +593,21 @@ function closeFullScreenMap() {
             try {
                 driverMap.container.fitToViewport();
             } catch (error) {
-                console.warn('Driver map resize warning:', error);
+                console.warn('Map resize warning:', error);
             }
         }
     }, 300);
 }
 
-// Select point on map with full-screen option
+// Select point on map with enhanced interaction
 function selectOnMap(type) {
-    console.log(`🎯 Opening full-screen driver map for ${type.toUpperCase()} selection`);
+    if (!mapInitialized) {
+        console.warn('⚠️ Map not initialized, cannot select point');
+        alert('Карта не загружена. Попробуйте позже.');
+        return;
+    }
+    
+    console.log(`🎯 Opening driver map for ${type.toUpperCase()} selection`);
     openFullScreenMap(type);
 }
 
@@ -519,35 +618,34 @@ function updateMapPickerButtons() {
     
     // Reset all buttons
     document.querySelectorAll('.address-map-btn').forEach(btn => {
+        btn.classList.remove('selecting');
         btn.style.background = '';
         btn.style.color = '';
-        btn.style.transform = '';
-        btn.classList.remove('selecting');
     });
     
     // Highlight active selection
     if (selectingPoint === 'from' && fromBtn) {
+        fromBtn.classList.add('selecting');
         fromBtn.style.background = '#ef4444';
         fromBtn.style.color = 'white';
-        fromBtn.classList.add('selecting');
     } else if (selectingPoint === 'to' && toBtn) {
+        toBtn.classList.add('selecting');
         toBtn.style.background = '#ef4444';
         toBtn.style.color = 'white';
-        toBtn.classList.add('selecting');
     }
 }
 
-// Enhanced route calculation for driver
+// FIXED: Enhanced route calculation with REAL coordinates
 async function updateDriverRouteWithYandexAPI() {
-    console.log('🛣️ Calculating driver route...');
-    
-    if (!fromMarker || !toMarker) {
-        console.log('⚠️ Missing driver markers');
+    if (!mapInitialized || !fromMarker || !toMarker) {
+        console.log('⚠️ Missing driver markers or map not ready');
         return;
     }
 
+    console.log('🛣️ Calculating driver route with REAL coordinates...');
+    
     try {
-        // Get coordinates from form fields
+        // Get REAL coordinates from form fields
         const fromCoords = [
             parseFloat(document.getElementById('from_lon').value), // longitude
             parseFloat(document.getElementById('from_lat').value)  // latitude
@@ -562,56 +660,69 @@ async function updateDriverRouteWithYandexAPI() {
             return;
         }
         
+        console.log('🛣️ Route calculation using REAL coordinates:', fromCoords, 'to', toCoords);
+        
+        // Remove old route
+        if (routeLine) {
+            try {
+                driverMap.removeChild(routeLine);
+            } catch (e) {
+                console.warn('Warning removing old route:', e);
+            }
+            routeLine = null;
+        }
+        
         // Try building route via Yandex router
         const {router, YMapFeature} = ymaps3;
 
-        if (routeLine && driverMap) {
-            driverMap.removeChild(routeLine);
-            routeLine = null;
-        }
-
-        const result = await router({
-            points: [fromCoords, toCoords],
-            type: 'driving'
-        });
-
-        if (result && result.routes && result.routes.length > 0) {
-            const geometry = result.routes[0].geometry;
-
-            routeLine = new YMapFeature({
-                geometry: {
-                    type: 'LineString',
-                    coordinates: geometry.coordinates
-                },
-                style: {
-                    stroke: [{
-                        color: '#3b82f6',
-                        width: 5,
-                        opacity: 0.8
-                    }],
-                    zIndex: 50
-                }
+        try {
+            const result = await router({
+                points: [fromCoords, toCoords],
+                type: 'driving'
             });
 
-            driverMap.addChild(routeLine);
+            if (result && result.routes && result.routes.length > 0) {
+                const geometry = result.routes[0].geometry;
 
-            const routeDistance = calculateRouteDistance(geometry.coordinates);
-            displayDriverRouteDistance(routeDistance.toFixed(1));
+                routeLine = new YMapFeature({
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: geometry.coordinates
+                    },
+                    style: {
+                        stroke: [{
+                            color: '#3b82f6',
+                            width: 5,
+                            opacity: 0.8
+                        }],
+                        zIndex: 50
+                    }
+                });
 
-            if (!isFullScreenMap && driverMap.setLocation) {
-                const bounds = calculateBounds(geometry.coordinates);
-                setTimeout(() => {
-                    driverMap.setLocation({
-                        bounds: bounds,
-                        duration: 1000
-                    });
-                }, 500);
+                driverMap.addChild(routeLine);
+
+                const routeDistance = calculateRouteDistance(geometry.coordinates);
+                displayDriverRouteDistance(routeDistance.toFixed(1));
+
+                console.log('✅ Driver route calculated successfully with REAL coordinates');
+                
+                // Fit route in view if not in full-screen mode
+                if (!isFullScreenMap) {
+                    const bounds = calculateBounds(geometry.coordinates);
+                    setTimeout(() => {
+                        driverMap.setLocation({
+                            bounds: bounds,
+                            duration: 1000
+                        });
+                    }, 500);
+                }
+            } else {
+                // Fallback to straight line
+                drawSimpleDriverRoute(fromCoords, toCoords);
             }
-        } else {
-            // Fallback to straight line
+        } catch (routeError) {
+            console.error('Route calculation failed, using straight line:', routeError);
             drawSimpleDriverRoute(fromCoords, toCoords);
-            const distance = calculateStraightDistance(fromCoords, toCoords);
-            displayDriverRouteDistance(distance.toFixed(1));
         }
         
     } catch (error) {
@@ -622,15 +733,10 @@ async function updateDriverRouteWithYandexAPI() {
 // Draw simple route line for driver
 function drawSimpleDriverRoute(fromCoords, toCoords) {
     try {
-        // Remove old route
-        if (routeLine && driverMap) {
-            driverMap.removeChild(routeLine);
-            routeLine = null;
-        }
+        if (!mapInitialized || !driverMap) return;
         
         const {YMapFeature} = ymaps3;
         
-        // Create route line
         routeLine = new YMapFeature({
             geometry: {
                 type: 'LineString',
@@ -648,8 +754,11 @@ function drawSimpleDriverRoute(fromCoords, toCoords) {
         
         driverMap.addChild(routeLine);
         
-        // Fit map to show both points
-        if (!isFullScreenMap && driverMap.setLocation) {
+        const distance = calculateStraightDistance(fromCoords, toCoords);
+        displayDriverRouteDistance(distance.toFixed(1));
+        
+        // Fit route in view
+        if (!isFullScreenMap) {
             const bounds = calculateBounds([fromCoords, toCoords]);
             setTimeout(() => {
                 driverMap.setLocation({
@@ -659,14 +768,14 @@ function drawSimpleDriverRoute(fromCoords, toCoords) {
             }, 500);
         }
         
-        console.log('✅ Driver route line drawn');
+        console.log('✅ Driver simple route drawn with REAL coordinates');
         
     } catch (error) {
         console.error('❌ Error drawing driver route:', error);
     }
 }
 
-// Display route distance in UI for driver
+// Display route distance in UI
 function displayDriverRouteDistance(distanceKm) {
     const routeInfo = document.getElementById('routeInfo');
     const routeDistance = document.getElementById('routeDistance');
@@ -675,6 +784,27 @@ function displayDriverRouteDistance(distanceKm) {
         routeDistance.textContent = `🛣️ ${distanceKm} км`;
         routeInfo.style.display = 'block';
     }
+}
+
+// Calculate straight line distance
+function calculateStraightDistance(fromCoords, toCoords) {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (toCoords[1] - fromCoords[1]) * Math.PI / 180;
+    const dLon = (toCoords[0] - fromCoords[0]) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(fromCoords[1] * Math.PI / 180) * Math.cos(toCoords[1] * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+// Calculate distance along a polyline
+function calculateRouteDistance(coords) {
+    let total = 0;
+    for (let i = 1; i < coords.length; i++) {
+        total += calculateStraightDistance(coords[i - 1], coords[i]);
+    }
+    return total;
 }
 
 // Calculate bounds for coordinates
@@ -701,27 +831,6 @@ function calculateBounds(coordinates) {
     ];
 }
 
-// Calculate straight line distance
-function calculateStraightDistance(fromCoords, toCoords) {
-    const R = 6371; // Earth's radius in kilometers
-    const dLat = (toCoords[1] - fromCoords[1]) * Math.PI / 180;
-    const dLon = (toCoords[0] - fromCoords[0]) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(fromCoords[1] * Math.PI / 180) * Math.cos(toCoords[1] * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-}
-
-// Calculate distance along a polyline of coordinates
-function calculateRouteDistance(coords) {
-    let total = 0;
-    for (let i = 1; i < coords.length; i++) {
-        total += calculateStraightDistance(coords[i - 1], coords[i]);
-    }
-    return total;
-}
-
 // Toggle map size for driver
 function toggleMapSize() {
     const mapContainer = document.getElementById('mapContainer');
@@ -731,15 +840,11 @@ function toggleMapSize() {
     if (!mapContainer || !toggleBtn) return;
     
     if (mapContainer.classList.contains('expanded')) {
-        // Shrink map
         mapContainer.classList.remove('expanded');
         sizeText.textContent = '📍 БОЛЬШАЯ';
-        toggleBtn.title = 'Увеличить карту';
     } else {
-        // Expand map
         mapContainer.classList.add('expanded');
         sizeText.textContent = '📍 МАЛЕНЬКАЯ';
-        toggleBtn.title = 'Уменьшить карту';
     }
     
     // Resize map after animation
@@ -754,14 +859,42 @@ function toggleMapSize() {
     }, 300);
 }
 
-// Address suggestions for driver
-let suggestTimeout;
+// Clear driver route and markers
+function clearDriverRoute() {
+    try {
+        if (routeLine && driverMap) {
+            driverMap.removeChild(routeLine);
+            routeLine = null;
+        }
+        
+        if (fromMarker && driverMap) {
+            driverMap.removeChild(fromMarker);
+            fromMarker = null;
+        }
+        
+        if (toMarker && driverMap) {
+            driverMap.removeChild(toMarker);
+            toMarker = null;
+        }
+        
+        const routeInfo = document.getElementById('routeInfo');
+        if (routeInfo) {
+            routeInfo.style.display = 'none';
+        }
+        
+        console.log('🧹 Driver route and markers cleared');
+    } catch (error) {
+        console.error('❌ Error clearing driver route:', error);
+    }
+}
 
+// Enhanced address suggestions with geocoding
 function setupDriverAddressSuggestions(fieldId) {
     const input = document.getElementById(fieldId);
     if (!input) return;
     
     const suggestionsId = fieldId + '_suggestions';
+    let suggestTimeout;
     
     input.addEventListener('input', function(e) {
         clearTimeout(suggestTimeout);
@@ -775,19 +908,16 @@ function setupDriverAddressSuggestions(fieldId) {
         
         suggestTimeout = setTimeout(async () => {
             try {
-                if (!window.ymaps3 || !ymaps3.search) {
-                    console.warn('Yandex search not available for driver');
-                    return;
-                }
+                // Use Yandex Suggest API for better results
+                const response = await fetch(
+                    `https://suggest-maps.yandex.ru/v1/suggest?apikey=8a3e4da0-9ef2-4176-9203-e7014c1dba6f&text=${encodeURIComponent(query)}&results=5&lang=ru_RU`
+                );
                 
-                const results = await ymaps3.search({
-                    text: query,
-                    bounds: [[46.99, 41.15], [87.31, 55.44]], // Kazakhstan bounds
-                    results: 10
-                });
-                
-                if (results && results.length > 0) {
-                    displayDriverSuggestions(fieldId, results.slice(0, 5));
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.results) {
+                        displayDriverSuggestions(fieldId, data.results);
+                    }
                 }
             } catch (error) {
                 console.error('Driver suggestion error:', error);
@@ -796,7 +926,7 @@ function setupDriverAddressSuggestions(fieldId) {
     });
 }
 
-// Display address suggestions for driver
+// Display address suggestions with enhanced functionality
 function displayDriverSuggestions(field, items) {
     const container = document.getElementById(field + '_suggestions');
     if (!container) return;
@@ -811,60 +941,53 @@ function displayDriverSuggestions(field, items) {
     items.forEach(item => {
         const div = document.createElement('div');
         div.className = 'suggestion-item';
-        div.textContent = item.properties.name || item.properties.description;
-        div.onclick = function() {
-            document.getElementById(field).value = item.properties.name || item.properties.description;
+        div.textContent = item.title.text || item.subtitle?.text || 'Unknown';
+        div.onclick = async function() {
+            document.getElementById(field).value = div.textContent;
             container.style.display = 'none';
             
-            if (item.geometry && item.geometry.coordinates) {
-                const coordinates = item.geometry.coordinates;
-                const type = field.includes('from') ? 'from' : 'to';
-                setDriverPoint(type, coordinates);
+            // Auto-geocode the selected address
+            try {
+                const response = await fetch(
+                    `https://geocode-maps.yandex.ru/1.x/?apikey=8a3e4da0-9ef2-4176-9203-e7014c1dba6f&geocode=${encodeURIComponent(div.textContent)}&format=json&results=1`
+                );
                 
-                if (type === 'from') {
-                    document.getElementById('from_lat').value = coordinates[1];
-                    document.getElementById('from_lon').value = coordinates[0];
-                } else {
-                    document.getElementById('to_lat').value = coordinates[1];
-                    document.getElementById('to_lon').value = coordinates[0];
-                }
-                
-                setTimeout(() => {
-                    if (fromMarker && toMarker) {
-                        updateDriverRouteWithYandexAPI();
+                if (response.ok) {
+                    const data = await response.json();
+                    const geoObjects = data.response?.GeoObjectCollection?.featureMember;
+                    
+                    if (geoObjects && geoObjects.length > 0) {
+                        const coordsString = geoObjects[0].GeoObject.Point.pos;
+                        const coords = coordsString.split(' ').map(parseFloat); // [lon, lat]
+                        
+                        const type = field.includes('from') ? 'from' : 'to';
+                        setDriverPoint(type, coords);
+                        
+                        // Update coordinate fields
+                        if (type === 'from') {
+                            document.getElementById('from_lat').value = coords[1];
+                            document.getElementById('from_lon').value = coords[0];
+                        } else {
+                            document.getElementById('to_lat').value = coords[1];
+                            document.getElementById('to_lon').value = coords[0];
+                        }
+                        
+                        // Update route if both points exist
+                        setTimeout(() => {
+                            if (fromMarker && toMarker) {
+                                updateDriverRouteWithYandexAPI();
+                            }
+                        }, 200);
                     }
-                }, 200);
+                }
+            } catch (error) {
+                console.error('Geocoding error:', error);
             }
         };
         container.appendChild(div);
     });
     
     container.style.display = 'block';
-}
-
-// Clear driver route
-function clearDriverRoute() {
-    if (routeLine && driverMap) {
-        driverMap.removeChild(routeLine);
-        routeLine = null;
-    }
-    
-    if (fromMarker && driverMap) {
-        driverMap.removeChild(fromMarker);
-        fromMarker = null;
-    }
-    
-    if (toMarker && driverMap) {
-        driverMap.removeChild(toMarker);
-        toMarker = null;
-    }
-    
-    const routeInfo = document.getElementById('routeInfo');
-    if (routeInfo) {
-        routeInfo.style.display = 'none';
-    }
-    
-    console.log('🧹 Driver route and markers cleared');
 }
 
 // Make functions globally available
@@ -875,3 +998,29 @@ window.toggleMapSize = toggleMapSize;
 window.closeFullScreenMap = closeFullScreenMap;
 window.setupDriverAddressSuggestions = setupDriverAddressSuggestions;
 window.clearDriverRoute = clearDriverRoute;
+
+// Auto-initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🗺️ COMPLETE Driver Map Service loaded, waiting for initialization...');
+    
+    // Wait for ymaps3 script to load
+    let attempts = 0;
+    const maxAttempts = 30; // Increased attempts
+    
+    const checkYmaps = () => {
+        attempts++;
+        if (window.ymaps3) {
+            console.log('✅ ymaps3 detected, initializing driver map with REAL coordinates...');
+            setTimeout(initializeDriverMap, 800);
+        } else if (attempts < maxAttempts) {
+            setTimeout(checkYmaps, 500);
+        } else {
+            console.error('❌ ymaps3 failed to load after maximum attempts');
+            showMapError('Не удалось загрузить Yandex Maps API');
+        }
+    };
+    
+    checkYmaps();
+});
+
+console.log('🗺️ COMPLETE FIXED Driver Map Service script loaded - supports REAL coordinates and interactive A/B pins');
