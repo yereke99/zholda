@@ -182,32 +182,7 @@ body::before {
 
 
 
-/* CRITICAL: Prevent ALL automatic transforms and centering on Yandex Map elements */
-ymaps,
-ymaps *,
-[class*="ymaps"],
-[class*="ymap"] {
-  transform: none !important;
-  margin: 0 !important;
-  left: auto !important;
-  top: auto !important;
-  transition: none !important;
-  animation: none !important;
-  will-change: auto !important;
-}
-
-/* CRITICAL: Force absolute positioning without centering transforms */
-.ymaps3-marker,
-[class*="ymaps3-marker"],
-[class*="ymap-marker"] {
-  transform: none !important;
-  margin: 0 !important;
-  left: auto !important;
-  top: auto !important;
-  position: absolute !important;
-  transition: none !important;
-  animation: none !important;
-}
+/* Removed aggressive overrides that interfered with Yandex Map rendering */
 
 /* Enhanced User Location Marker - FIXED VERSION */
 .user-location-marker-container {
